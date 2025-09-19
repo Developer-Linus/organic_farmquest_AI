@@ -239,6 +239,101 @@
 
 ---
 
+## 🛡️ Data Validation & Type Safety
+
+### 1. **Hybrid Approach: TypeScript + Zod**
+- ✅ Use **Zod schemas** for API boundaries and external data validation
+- ✅ Use **TypeScript interfaces** for internal application types
+- ✅ Derive TypeScript types from Zod schemas using `z.infer<>`
+- ✅ Validate at boundaries, trust types internally
+- ✅ Zero runtime overhead for internal type checking
+
+### 2. **API Request/Response Models**
+- ✅ Define Zod schemas for all API contracts
+- ✅ Validate all incoming API responses
+- ✅ Validate all outgoing API requests
+- ✅ Use proper error handling for validation failures
+- ✅ Implement type-safe API client with schema validation
+
+```typescript
+// Example: API Schema Definition
+const CreateGameRequestSchema = z.object({
+  topic: z.string().min(1).max(100),
+  difficulty: z.enum(['easy', 'medium', 'hard']),
+  userId: z.string().uuid()
+});
+
+const StoryResponseSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  choices: z.array(z.object({
+    id: z.string(),
+    text: z.string(),
+    points: z.number().min(0).max(100)
+  }))
+});
+
+type CreateGameRequest = z.infer<typeof CreateGameRequestSchema>;
+type StoryResponse = z.infer<typeof StoryResponseSchema>;
+```
+
+### 3. **Internal Application Types**
+- ✅ Use TypeScript interfaces for component props
+- ✅ Use interfaces for application state structures
+- ✅ Use interfaces for internal business logic types
+- ✅ Document complex types with JSDoc comments
+- ✅ Prefer composition over inheritance for type design
+
+```typescript
+// Example: Internal Type Definitions
+interface GameState {
+  session: GameSession | null;
+  currentStory: Story | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+interface StoryDisplayProps {
+  story: Story;
+  onChoiceSelect: (choice: StoryChoice) => void;
+  isLoading?: boolean;
+}
+```
+
+### 4. **Validation Strategy**
+- ✅ Validate at API boundaries (requests/responses)
+- ✅ Validate user input before processing
+- ✅ Validate data from external sources (Appwrite, LLM APIs)
+- ✅ Implement centralized validation utilities
+- ✅ Provide meaningful error messages for validation failures
+
+```typescript
+// Example: Validation Utility
+export const validateRequest = <T>(schema: z.ZodSchema<T>, data: unknown): T => {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    throw new ValidationError(result.error.message);
+  }
+  return result.data;
+};
+```
+
+### 5. **Appwrite Integration**
+- ✅ Define Zod schemas for Appwrite document structures
+- ✅ Validate Appwrite responses before using in application
+- ✅ Use TypeScript interfaces for typed Appwrite client methods
+- ✅ Implement proper error handling for Appwrite operations
+- ✅ Cache validated data to avoid repeated validation
+
+### 6. **Performance Considerations**
+- ✅ Validate only at necessary boundaries
+- ✅ Use TypeScript interfaces for zero-runtime-cost typing
+- ✅ Implement schema caching for frequently used validations
+- ✅ Avoid over-validation of trusted internal data
+- ✅ Profile validation performance in critical paths
+
+---
+
 ## 🎯 Enforcement & Compliance
 
 ### 1. **Automated Enforcement**
