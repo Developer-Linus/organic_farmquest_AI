@@ -1,9 +1,15 @@
-import { Text, View } from "react-native";
+import { useEffect } from 'react';
+import { router } from 'expo-router';
 
 export default function Index() {
-  return (
-    <View className="flex-1 items-center justify-center bg-[#25292e]">
-      <Text className="text-white">Welcome to Organic FarmQuest AI</Text>
-    </View>
-  );
+  useEffect(() => {
+    // Add a small delay to ensure Root Layout is mounted before navigation
+    const timer = setTimeout(() => {
+      router.replace('/welcome');
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return null;
 }
