@@ -1,184 +1,205 @@
 import React from 'react';
-import { View, Text } from 'react-native';
-import { Button, H1, H2, YStack, XStack, Card, Image } from 'tamagui';
+import { View, Text, ScrollView, ImageBackground } from 'react-native';
+import { Button, H1, H2, YStack } from 'tamagui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Welcome() {
   const insets = useSafeAreaInsets();
 
-  const handleGetStarted = () => {
-    router.push('/game/setup');
+  const handleLogin = () => {
+    router.push('/auth/login');
   };
 
-  const handleLearnMore = () => {
-    // Navigate to about/info screen (to be implemented)
-    console.log('Learn more pressed');
+  const handleRegister = () => {
+    router.push('/auth/register');
   };
 
   return (
-    <View 
-      className="flex-1"
-      style={{ 
-        paddingTop: insets.top,
-        paddingBottom: insets.bottom,
-        paddingLeft: insets.left,
-        paddingRight: insets.right,
-      }}
+    <ImageBackground 
+      source={require('../assets/images/book-texture.svg')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
     >
-      <LinearGradient
-        colors={['#E8F5E8', '#F0F8F0', '#FFFFFF']}
+      <View 
         className="flex-1"
+        style={{ 
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        }}
       >
-        <YStack flex={1} paddingHorizontal="$4" paddingVertical="$6" space="$4">
-          {/* Header Section */}
-          <YStack alignItems="center" space="$3" marginTop="$8">
-            <View className="w-24 h-24 bg-primary-500 rounded-full items-center justify-center mb-4">
-              <Text className="text-4xl">🌱</Text>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
+        <YStack 
+          flex={1} 
+          paddingHorizontal="$6" 
+          paddingVertical="$8"
+          space="$6"
+          minHeight="100%"
+        >
+          {/* App Logo/Icon */}
+          <YStack alignItems="center" marginTop="$4">
+            <View 
+              style={{
+                width: 96,
+                height: 96,
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                borderRadius: 48,
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: '#8B7355',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+                elevation: 4,
+              }}
+            >
+              <Text style={{ fontSize: 48 }}>🌱</Text>
             </View>
-            
+          </YStack>
+
+          {/* App Title and Description */}
+          <YStack alignItems="center" space="$4" flex={1} justifyContent="center">
             <H1 
               textAlign="center" 
               fontSize="$9" 
               fontWeight="bold"
-              color="$primary-700"
-              className="text-primary-700"
+              color="$primary-800"
+              style={{
+                textShadowColor: 'rgba(255, 255, 255, 0.8)',
+                textShadowOffset: { width: 1, height: 1 },
+                textShadowRadius: 2,
+              }}
             >
-              Organic FarmQuest AI
+              Organic FarmQuest
             </H1>
             
             <H2 
               textAlign="center" 
-              fontSize="$6" 
-              color="$earth-600"
-              className="text-earth-600 opacity-90"
-              maxWidth={300}
+              fontSize="$5" 
+              color="$earth-700"
+              maxWidth={320}
+              lineHeight="$6"
+              paddingHorizontal="$4"
+              style={{
+                textShadowColor: 'rgba(255, 255, 255, 0.6)',
+                textShadowOffset: { width: 0.5, height: 0.5 },
+                textShadowRadius: 1,
+              }}
             >
-              Learn organic farming through interactive AI-powered stories
+              Learn organic farming through interactive stories that adapt to your choices and help you master sustainable agriculture techniques.
             </H2>
+
+            {/* Features List */}
+            <YStack space="$3" marginTop="$6" maxWidth={300}>
+              <Text 
+                style={{
+                  textAlign: 'center',
+                  fontSize: 16,
+                  color: '#5D4E37',
+                  fontWeight: '500',
+                  textShadowColor: 'rgba(255, 255, 255, 0.5)',
+                  textShadowOffset: { width: 0.5, height: 0.5 },
+                  textShadowRadius: 1,
+                }}
+              >
+                🌱 Interactive story-based learning
+              </Text>
+              <Text 
+                style={{
+                  textAlign: 'center',
+                  fontSize: 16,
+                  color: '#5D4E37',
+                  fontWeight: '500',
+                  textShadowColor: 'rgba(255, 255, 255, 0.5)',
+                  textShadowOffset: { width: 0.5, height: 0.5 },
+                  textShadowRadius: 1,
+                }}
+              >
+                🎯 Make choices that shape your farm
+              </Text>
+              <Text 
+                style={{
+                  textAlign: 'center',
+                  fontSize: 16,
+                  color: '#5D4E37',
+                  fontWeight: '500',
+                  textShadowColor: 'rgba(255, 255, 255, 0.5)',
+                  textShadowOffset: { width: 0.5, height: 0.5 },
+                  textShadowRadius: 1,
+                }}
+              >
+                📚 Learn real organic farming techniques
+              </Text>
+            </YStack>
           </YStack>
 
-          {/* Features Section */}
-          <YStack flex={1} justifyContent="center" space="$4" marginVertical="$6">
-            <Card 
-              className="bg-white/80 border-primary-200" 
-              padding="$4" 
-              borderRadius="$6"
-              shadowColor="$primary-300"
-              shadowOffset={{ width: 0, height: 2 }}
-              shadowOpacity={0.1}
-              shadowRadius={8}
-            >
-              <XStack alignItems="center" space="$3">
-                <View className="w-12 h-12 bg-primary-100 rounded-full items-center justify-center">
-                  <Text className="text-2xl">🎮</Text>
-                </View>
-                <YStack flex={1}>
-                  <Text className="text-lg font-semibold text-primary-700">Interactive Learning</Text>
-                  <Text className="text-earth-600 opacity-80">
-                    Make choices that shape your farming journey
-                  </Text>
-                </YStack>
-              </XStack>
-            </Card>
-
-            <Card 
-              className="bg-white/80 border-primary-200" 
-              padding="$4" 
-              borderRadius="$6"
-              shadowColor="$primary-300"
-              shadowOffset={{ width: 0, height: 2 }}
-              shadowOpacity={0.1}
-              shadowRadius={8}
-            >
-              <XStack alignItems="center" space="$3">
-                <View className="w-12 h-12 bg-accent-100 rounded-full items-center justify-center">
-                  <Text className="text-2xl">🤖</Text>
-                </View>
-                <YStack flex={1}>
-                  <Text className="text-lg font-semibold text-primary-700">AI-Powered Stories</Text>
-                  <Text className="text-earth-600 opacity-80">
-                    Unique scenarios generated just for you
-                  </Text>
-                </YStack>
-              </XStack>
-            </Card>
-
-            <Card 
-              className="bg-white/80 border-primary-200" 
-              padding="$4" 
-              borderRadius="$6"
-              shadowColor="$primary-300"
-              shadowOffset={{ width: 0, height: 2 }}
-              shadowOpacity={0.1}
-              shadowRadius={8}
-            >
-              <XStack alignItems="center" space="$3">
-                <View className="w-12 h-12 bg-earth-100 rounded-full items-center justify-center">
-                  <Text className="text-2xl">🌿</Text>
-                </View>
-                <YStack flex={1}>
-                  <Text className="text-lg font-semibold text-primary-700">Organic Focus</Text>
-                  <Text className="text-earth-600 opacity-80">
-                    Learn sustainable, chemical-free farming methods
-                  </Text>
-                </YStack>
-              </XStack>
-            </Card>
-          </YStack>
-
-          {/* Action Buttons */}
-          <YStack space="$3" marginBottom="$4">
+          {/* Action Buttons - Fixed at bottom */}
+          <YStack space="$4" width="100%" paddingBottom="$4">
             <Button
-              size="$6"
-              theme="green"
-              onPress={() => router.push('/game/setup')}
-              backgroundColor="$primary-700"
+              size="$5"
+              backgroundColor="$primary-600"
               color="white"
               borderRadius="$4"
               fontWeight="600"
-              pressStyle={{ backgroundColor: '$primary-800' }}
+              fontSize="$4"
+              onPress={handleLogin}
+              pressStyle={{ backgroundColor: '$primary-700', scale: 0.98 }}
+              style={{
+                shadowColor: '#8B7355',
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.3,
+                shadowRadius: 5,
+                elevation: 6,
+              }}
             >
-              Start Your Farm Adventure
+              Login
             </Button>
             
             <Button
-              size="$4"
+              size="$5"
               variant="outlined"
-              onPress={() => router.push('/test-animation')}
-              borderColor="$primary-700"
+              borderColor="$primary-600"
               color="$primary-700"
               borderRadius="$4"
-              fontWeight="500"
-              pressStyle={{ backgroundColor: '$primary-50' }}
+              fontWeight="600"
+              fontSize="$4"
+              onPress={handleRegister}
+              pressStyle={{ backgroundColor: '$primary-50', scale: 0.98 }}
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                shadowColor: '#8B7355',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+                elevation: 4,
+              }}
             >
-              Test Animation
+              Create Account
             </Button>
-            
-            <Button
-              size="$4"
-              variant="outlined"
-              className="border-primary-300 text-primary-600"
-              borderRadius="$6"
-              onPress={handleLearnMore}
-              pressStyle={{ scale: 0.98 }}
-              animation="bouncy"
-            >
-              <Text className="text-primary-600 font-medium">Learn More</Text>
-            </Button>
-          </YStack>
 
-          {/* Footer */}
-          <Text 
-            textAlign="center" 
-            className="text-earth-500 opacity-70 text-sm"
-            marginTop="$2"
-          >
-            Grow your knowledge, nurture the earth 🌍
-          </Text>
+            {/* Simple Footer */}
+            <Text 
+              style={{
+                textAlign: 'center',
+                color: '#8B7355',
+                fontSize: 14,
+                marginTop: 16,
+                textShadowColor: 'rgba(255, 255, 255, 0.6)',
+                textShadowOffset: { width: 0.5, height: 0.5 },
+                textShadowRadius: 1,
+              }}
+            >
+              Start your farming journey today
+            </Text>
+          </YStack>
         </YStack>
-      </LinearGradient>
-    </View>
+       </ScrollView>
+     </View>
+   </ImageBackground>
   );
 }
