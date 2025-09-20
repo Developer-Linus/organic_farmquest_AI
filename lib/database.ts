@@ -15,12 +15,14 @@ export class DatabaseService{
                 created_at: new Date(),
             })
             // Insert into Appwrite Users collection
-            const user = await databases.createDocument(
+            const response = await databases.createDocument(
                 db.databaseId,
                 db.collections.USERS,
                 validatedData.user_id,
                 validatedData,
             )
+            
+            return UserSchema.parse(response);
         }catch(error: any){
             throw new Error(`Failed to create user: ${error.message}`);
         }
@@ -75,6 +77,135 @@ export class DatabaseService{
           return response.documents.map((doc) => StorySchema.parse(doc));
         } catch (error: any) {
           throw new Error(`Failed to get active stories: ${error.message}`);
+        }
+      }
+
+      /**
+       * Get the starting node of a story
+       * @param storyId - The ID of the story
+       * @returns The first/starting node of the story
+       */
+      async getStoryStartNode(storyId: string): Promise<StoryNode> {
+        try {
+          const response = await databases.listDocuments(
+            db.databaseId,
+            db.collections.STORY_NODES,
+            [
+              Query.equal("story_id", storyId),
+              Query.equal("is_root", true),
+              Query.limit(1)
+            ]
+          );
+
+          if (response.documents.length === 0) {
+            throw new Error(`No starting node found for story ${storyId}`);
+          }
+
+          return StoryNodeSchema.parse(response.documents[0]);
+        } catch (error: any) {
+          throw new Error(`Failed to get story start node: ${error.message}`);
+        }
+      }
+
+      /**
+       * Get the next story node based on current node and choice
+       * @param currentNodeId - The ID of the current node
+       * @param choiceId - The ID of the selected choice
+       * @returns The next story node
+       */
+      async getNextNode(currentNodeId: string, choiceId: string): Promise<StoryNode> {
+        try {
+          // First, get the current node to access its choices
+          const currentNode = await databases.getDocument(
+            db.databaseId,
+            db.collections.STORY_NODES,
+            currentNodeId
+          );
+
+          const parsedCurrentNode = StoryNodeSchema.parse(currentNode);
+          
+          // Find the selected choice
+          const selectedChoice = parsedCurrentNode.choices.find(choice => choice.choice_id === choiceId);
+          if (!selectedChoice) {
+            throw new Error(`Choice ${choiceId} not found in node ${currentNodeId}`);
+          }
+
+          // Get the next node
+          const nextNode = await databases.getDocument(
+            db.databaseId,
+            db.collections.STORY_NODES,
+            selectedChoice.next_node_id
+          );
+
+          return StoryNodeSchema.parse(nextNode);
+        } catch (error: any) {
+          throw new Error(`Failed to get next node: ${error.message}`);
+        }
+      }
+
+      /**
+       * Create a new story node
+       * @param nodeData - The story node data without auto-generated fields
+       * @returns The created story node
+       */
+      async createStoryNode(
+        nodeData: Omit<StoryNode, "node_id" | "created_at">
+      ): Promise<StoryNode> {
+        try {
+          const validatedData = StoryNodeSchema.parse({
+            ...nodeData,
+            node_id: ID.unique(),
+            created_at: new Date(),
+          });
+
+          const response = await databases.createDocument(
+            db.databaseId,
+            db.collections.STORY_NODES,
+            validatedData.node_id,
+            validatedData
+          );
+
+          return StoryNodeSchema.parse(response);
+        } catch (error: any) {
+          throw new Error(`Failed to create story node: ${error.message}`);
+        }
+      }
+
+      /**
+       * Get a story node by its ID
+       * @param nodeId - The ID of the story node
+       * @returns The story node or null if not found
+       */
+      async getStoryNodeById(nodeId: string): Promise<StoryNode | null> {
+        try {
+          const response = await databases.getDocument(
+            db.databaseId,
+            db.collections.STORY_NODES,
+            nodeId
+          );
+          return StoryNodeSchema.parse(response);
+        } catch (error: any) {
+          if (error.code === 404) return null;
+          throw new Error(`Failed to get story node: ${error.message}`);
+        }
+      }
+
+      /**
+       * Get all nodes for a specific story
+       * @param storyId - The ID of the story
+       * @returns Array of story nodes
+       */
+      async getStoryNodes(storyId: string): Promise<StoryNode[]> {
+        try {
+          const response = await databases.listDocuments(
+            db.databaseId,
+            db.collections.STORY_NODES,
+            [Query.equal("story_id", storyId)]
+          );
+
+          return response.documents.map((doc) => StoryNodeSchema.parse(doc));
+        } catch (error: any) {
+          throw new Error(`Failed to get story nodes: ${error.message}`);
         }
       }
 }
