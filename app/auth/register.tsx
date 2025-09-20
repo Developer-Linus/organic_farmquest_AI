@@ -8,9 +8,11 @@ import { account } from '@/lib/appwrite';
 import { databaseService } from '@/lib/database';
 import { UserRegistrationSchema } from '@/src/schemas';
 import { ID } from 'react-native-appwrite';
+import { useGameContext } from '@/src/contexts/GameContext';
 
 export default function Register() {
   const insets = useSafeAreaInsets();
+  const { loginUser } = useGameContext();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -40,9 +42,22 @@ export default function Register() {
     if (!validateForm()) return;
     
     setIsLoading(true);
+    let authUserId: string | null = null;
+    
     try {
+      // Ensure no active session exists before registration
+      try {
+        await account.deleteSession('current');
+        console.log('Cleared existing session before registration');
+      } catch (sessionError) {
+        // No active session to clear, which is expected for new registrations
+        console.log('No existing session to clear');
+      }
+
       // Create user account with Appwrite Auth
       const userId = ID.unique();
+      authUserId = userId;
+      
       const authResponse = await account.create(
         userId,
         formData.email,
@@ -50,22 +65,55 @@ export default function Register() {
         formData.fullName
       );
 
+      // IMPORTANT: Create session immediately after account creation
+      // This authenticates the user so they can perform database operations
+      await account.createEmailPasswordSession(formData.email, formData.password);
+      console.log('User authenticated successfully');
+
       // Create user profile in database with the same ID as auth user
       // Note: We use a placeholder for hashed_password since Appwrite handles auth separately
-      await databaseService.createUser({
-        id: userId, // Use the same ID as the auth user
-        name: formData.fullName,
-        email: formData.email,
-        hashed_password: 'appwrite_managed', // Placeholder since Appwrite manages auth
-        games_won: 0
-      });
+      let userProfile;
+      try {
+        userProfile = await databaseService.createUser({
+          name: formData.fullName,
+          email: formData.email,
+          hashed_password: 'appwrite_managed', // Placeholder since Appwrite manages auth
+          games_won: 0
+        }, userId); // Pass the userId as a separate parameter
+        
+        console.log('User profile created successfully:', userProfile.id);
+      } catch (dbError: any) {
+        console.error('Database user creation error:', dbError);
+        
+        // Note: Appwrite Account API doesn't support client-side user deletion
+        // The user will remain in Appwrite auth but without a database profile
+        // This will be handled by the GameContext initialization logic
+        console.warn('Orphaned Appwrite user created with ID:', userId);
+        console.warn('User exists in Appwrite auth but not in database - will be handled on next login');
+        
+        // Provide clear guidance to the user
+        Alert.alert(
+          'Registration Issue', 
+          'There was an issue creating your profile. You can try logging in with your credentials, and we\'ll complete the setup automatically.',
+          [{ text: 'OK' }]
+        );
+        
+        // Re-throw the database error to be handled by the outer catch block
+        throw new Error(`Failed to create user profile in database: ${dbError.message || dbError}`);
+      }
 
-      // Automatically log in the user after registration
-      await account.createEmailPasswordSession(formData.email, formData.password);
+      // Only proceed with login if user profile was created successfully
+      if (userProfile) {
+        // Session already created above, just set user in context
+        await loginUser(userProfile);
 
-      Alert.alert('Success', 'Account created successfully!', [
-        { text: 'OK', onPress: () => router.push('/game/setup') }
-      ]);
+        Alert.alert('Success', 'Account created successfully!', [
+          { text: 'OK', onPress: () => router.push('/game/setup') }
+        ]);
+      } else {
+        throw new Error('User profile creation failed');
+      }
+      
     } catch (error: any) {
       console.error('Registration error:', error);
       
@@ -73,7 +121,7 @@ export default function Register() {
       let errorMessage = 'Failed to create account. Please try again.';
       
       if (error.code === 409) {
-        errorMessage = 'An account with this email already exists.';
+        errorMessage = 'An account with this email already exists. If you believe this is an error, please try logging in instead.';
       } else if (error.code === 400) {
         errorMessage = 'Invalid email or password format.';
       } else if (error.message) {

@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, ImageBackground, Alert } from 'react-native';
+import { View, Text, ScrollView, Alert } from 'react-native';
 import { Button, H1, H2, YStack, XStack, Input, Label } from 'tamagui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Eye, EyeOff, ArrowLeft, Mail, Lock } from '@tamagui/lucide-icons';
 import { account } from '@/lib/appwrite';
+import { databaseService } from '@/lib/database';
 import { UserLoginSchema } from '@/src/schemas';
+import { useGameContext } from '@/src/contexts/GameContext';
+import { BookTexture } from '@/components/BookTexture';
 
 export default function Login() {
   const insets = useSafeAreaInsets();
+  const { loginUser } = useGameContext();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -36,8 +40,37 @@ export default function Login() {
     
     setIsLoading(true);
     try {
+      // Ensure no active session exists before login
+      try {
+        await account.deleteSession('current');
+        console.log('Cleared existing session before login');
+      } catch (sessionError) {
+        // No active session to clear, which is expected for new logins
+        console.log('No existing session to clear');
+      }
+
       // Authenticate user with Appwrite
-      await account.createEmailPasswordSession(formData.email, formData.password);
+      const session = await account.createEmailPasswordSession(formData.email, formData.password);
+      
+      // Get the current user from Appwrite Auth
+      const currentUser = await account.get();
+      
+      // Fetch user profile from our database using the authenticated user's ID
+      const userProfile = await databaseService.getUserById(currentUser.$id);
+      
+      if (!userProfile) {
+        // If user profile doesn't exist in our database, create it
+        // This handles cases where users were created in Appwrite but not in our database
+        const newUserProfile = await databaseService.createUser({
+          name: currentUser.name || 'User',
+          email: currentUser.email,
+          hashed_password: 'appwrite_managed', // Placeholder since Appwrite manages auth
+          games_won: 0
+        }, currentUser.$id); // Pass the userId as a separate parameter
+        await loginUser(newUserProfile);
+      } else {
+        await loginUser(userProfile);
+      }
       
       Alert.alert('Success', 'Login successful!', [
         { text: 'OK', onPress: () => router.push('/game/setup') }
@@ -71,11 +104,8 @@ export default function Login() {
   };
 
   return (
-    <ImageBackground 
-      source={require('../../assets/images/book-texture.svg')}
-      style={{ flex: 1 }}
-      resizeMode="cover"
-    >
+    <View style={{ flex: 1, position: 'relative' }}>
+      <BookTexture />
       <View 
         className="flex-1"
         style={{ 
@@ -328,6 +358,6 @@ export default function Login() {
           </YStack>
         </ScrollView>
       </View>
-    </ImageBackground>
+    </View>
   );
 }
