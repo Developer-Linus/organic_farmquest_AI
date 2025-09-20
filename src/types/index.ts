@@ -1,10 +1,12 @@
-// Core domain types (internal application use)
-export interface User{
-  user_id: string;
+// Core domain interfaces for internal application use
+export interface User {
+  id: string;
   name: string;
-  email:string;
+  email: string;
+  hashed_password: string;
   games_won: number;
-  created_at: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 export interface Story {
   story_id: string;

@@ -15,6 +15,10 @@ export default function Welcome() {
     router.push('/auth/register');
   };
 
+  const handleDatabaseTest = () => {
+    router.push('/database-test');
+  };
+
   return (
     <ImageBackground 
       source={require('../assets/images/book-texture.svg')}
@@ -180,6 +184,30 @@ export default function Welcome() {
               }}
             >
               Create Account
+            </Button>
+
+            {/* Database Test Button - Development Only */}
+            <Button
+              size="$4"
+              variant="outlined"
+              borderColor="$orange-500"
+              color="$orange-600"
+              borderRadius="$4"
+              fontWeight="500"
+              fontSize="$3"
+              onPress={handleDatabaseTest}
+              pressStyle={{ backgroundColor: '$orange-50', scale: 0.98 }}
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                shadowColor: '#FB923C',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.15,
+                shadowRadius: 2,
+                elevation: 2,
+                marginTop: 8,
+              }}
+            >
+              🔧 Database Test
             </Button>
 
             {/* Simple Footer */}

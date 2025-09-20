@@ -4,6 +4,8 @@ import { Button, H1, H2, YStack, XStack, Input, Label } from 'tamagui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Eye, EyeOff, ArrowLeft, Mail, Lock } from '@tamagui/lucide-icons';
+import { account } from '@/lib/appwrite';
+import { UserLoginSchema } from '@/src/schemas';
 
 export default function Login() {
   const insets = useSafeAreaInsets();
@@ -19,19 +21,14 @@ export default function Login() {
   };
 
   const validateForm = () => {
-    if (!formData.email.trim()) {
-      Alert.alert('Error', 'Please enter your email address');
+    try {
+      UserLoginSchema.parse(formData);
+      return true;
+    } catch (error: any) {
+      const errorMessage = error.errors?.[0]?.message || 'Please check your input';
+      Alert.alert('Validation Error', errorMessage);
       return false;
     }
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return false;
-    }
-    if (!formData.password.trim()) {
-      Alert.alert('Error', 'Please enter your password');
-      return false;
-    }
-    return true;
   };
 
   const handleLogin = async () => {
@@ -39,11 +36,27 @@ export default function Login() {
     
     setIsLoading(true);
     try {
-      // TODO: Implement Appwrite authentication
-      console.log('Login data:', formData);
-      Alert.alert('Success', 'Login successful!');
-    } catch (error) {
-      Alert.alert('Error', 'Invalid email or password. Please try again.');
+      // Authenticate user with Appwrite
+      await account.createEmailPasswordSession(formData.email, formData.password);
+      
+      Alert.alert('Success', 'Login successful!', [
+        { text: 'OK', onPress: () => router.push('/game/setup') }
+      ]);
+    } catch (error: any) {
+      console.error('Login error:', error);
+      
+      // Handle specific Appwrite errors
+      let errorMessage = 'Invalid email or password. Please try again.';
+      
+      if (error.code === 401) {
+        errorMessage = 'Invalid email or password.';
+      } else if (error.code === 429) {
+        errorMessage = 'Too many login attempts. Please try again later.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Login Failed', errorMessage);
     } finally {
       setIsLoading(false);
     }

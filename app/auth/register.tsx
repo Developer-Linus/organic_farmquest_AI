@@ -4,6 +4,10 @@ import { Button, H1, H2, YStack, XStack, Input, Label } from 'tamagui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Eye, EyeOff, ArrowLeft, User, Mail, Lock } from '@tamagui/lucide-icons';
+import { account } from '@/lib/appwrite';
+import { databaseService } from '@/lib/database';
+import { UserRegistrationSchema } from '@/src/schemas';
+import { ID } from 'react-native-appwrite';
 
 export default function Register() {
   const insets = useSafeAreaInsets();
@@ -22,27 +26,14 @@ export default function Register() {
   };
 
   const validateForm = () => {
-    if (!formData.fullName.trim()) {
-      Alert.alert('Error', 'Please enter your full name');
+    try {
+      UserRegistrationSchema.parse(formData);
+      return true;
+    } catch (error: any) {
+      const errorMessage = error.errors?.[0]?.message || 'Please check your input';
+      Alert.alert('Validation Error', errorMessage);
       return false;
     }
-    if (!formData.email.trim()) {
-      Alert.alert('Error', 'Please enter your email address');
-      return false;
-    }
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return false;
-    }
-    if (formData.password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters long');
-      return false;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return false;
-    }
-    return true;
   };
 
   const handleRegister = async () => {
@@ -50,13 +41,46 @@ export default function Register() {
     
     setIsLoading(true);
     try {
-      // TODO: Implement Appwrite registration
-      console.log('Registration data:', formData);
+      // Create user account with Appwrite Auth
+      const userId = ID.unique();
+      const authResponse = await account.create(
+        userId,
+        formData.email,
+        formData.password,
+        formData.fullName
+      );
+
+      // Create user profile in database with the same ID as auth user
+      // Note: We use a placeholder for hashed_password since Appwrite handles auth separately
+      await databaseService.createUser({
+        id: userId, // Use the same ID as the auth user
+        name: formData.fullName,
+        email: formData.email,
+        hashed_password: 'appwrite_managed', // Placeholder since Appwrite manages auth
+        games_won: 0
+      });
+
+      // Automatically log in the user after registration
+      await account.createEmailPasswordSession(formData.email, formData.password);
+
       Alert.alert('Success', 'Account created successfully!', [
-        { text: 'OK', onPress: () => router.push('/auth/login') }
+        { text: 'OK', onPress: () => router.push('/game/setup') }
       ]);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create account. Please try again.');
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      
+      // Handle specific Appwrite errors
+      let errorMessage = 'Failed to create account. Please try again.';
+      
+      if (error.code === 409) {
+        errorMessage = 'An account with this email already exists.';
+      } else if (error.code === 400) {
+        errorMessage = 'Invalid email or password format.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Registration Failed', errorMessage);
     } finally {
       setIsLoading(false);
     }

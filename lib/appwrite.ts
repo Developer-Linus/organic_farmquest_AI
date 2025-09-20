@@ -1,11 +1,11 @@
 import {Client, Account, Databases } from 'react-native-appwrite';
-import { DATABASE_CONFIG } from '@/constants';
+import { DATABASE_CONFIG } from '../src/constants/index';
 export const appwriteConfig = {
     endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
     platform: "com.knus.farmquest",
     projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
     databaseId: process.env.DATABASE_ID,
-    userCollectionId: process.env.USER_COLLECTION_ID,
+    userCollectionId: process.env.USER_COLLECTION_ID || 'users',
 }
 // Create database client
 export const client = new Client().setEndpoint(appwriteConfig.endpoint).setProject(appwriteConfig.projectId);
