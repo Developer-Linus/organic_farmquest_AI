@@ -1,103 +1,50 @@
-// Core application types and interfaces
-export interface User {
-  id: string;
-  email: string;
-  username: string;
-  avatar?: string;
-  createdAt: Date;
-  updatedAt: Date;
+// Core domain types (internal application use)
+export interface User{
+  user_id: string;
+  name: string;
+  email:string;
+  games_won: number;
+  created_at: Date;
 }
-
-export interface GameSession {
-  id: string;
-  userId: string;
-  topic: string;
-  difficulty: GameDifficulty;
-  currentStoryId?: string;
-  score: number;
-  isActive: boolean;
-  startedAt: Date;
-  completedAt?: Date;
-}
-
 export interface Story {
-  id: string;
-  sessionId: string;
-  content: string;
-  imageUrl?: string;
-  choices: StoryChoice[];
-  isCompleted: boolean;
-  createdAt: Date;
+  story_id: string;
+  user_id: string;
+  topic: string;
+  status: 'active' | 'completed' | 'failed';
+  current_node_id?: string;
+  is_won: boolean;
+  created_at: Date;
 }
-
 export interface StoryChoice {
   id: string;
   text: string;
-  points: number;
-  consequence?: string;
-  nextStoryHint?: string;
+  is_correct: boolean;
+  next_node_id: string;
 }
-
-export interface GameProgress {
-  totalGamesPlayed: number;
-  totalScore: number;
-  averageScore: number;
-  favoriteTopics: string[];
-  achievements: Achievement[];
+export interface StoryNode{
+  node_id: string;
+  story_id: string;
+  content: string;
+  is_root: boolean;
+  is_ending: boolean;
+  is_winning_ending: boolean;
+  choices: StoryChoice[];
 }
-
-export interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  unlockedAt: Date;
+export interface StoryJob{
+  job_id: string;
+  story_id: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  ai_prompt: string;
+  generated_content?: string;
+  created_at: Date;
+  completed_at?: Date;
 }
-
-export type GameDifficulty = 'easy' | 'medium' | 'hard';
-
-export type GameTopic = 
-  | 'vegetables'
-  | 'fruits'
-  | 'herbs'
-  | 'composting'
-  | 'pest_control'
-  | 'soil_health'
-  | 'water_management'
-  | 'seasonal_planning';
-
-// Navigation types
-export interface RootStackParamList {
-  index: undefined;
-  welcome: undefined;
-  game: undefined;
-  story: { sessionId: string };
-  profile: undefined;
-  settings: undefined;
-  'game/setup': undefined;
-  'game/play': { sessionId: string };
-  'game/results': { sessionId: string };
-}
-
-// API Response types
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-}
-
-// App State types
-export interface AppState {
-  user: User | null;
-  currentSession: GameSession | null;
-  isLoading: boolean;
-  error: string | null;
-}
-
-export interface GameState {
-  session: GameSession | null;
+export interface GameContextType {
+  currentUser: User | null;
   currentStory: Story | null;
-  isGeneratingStory: boolean;
-  error: string | null;
+  currentNode: StoryNode | null;
+
+  // Actions
+  createNewStory: (topic: string) => Promise<void>;
+  makeChoice: (choiceId: string) => Promise<void>;
 }
