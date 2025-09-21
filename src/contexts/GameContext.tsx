@@ -1,8 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { databaseService } from '@/lib/database';
-import { account } from '@/lib/appwrite';
-import { ID } from 'react-native-appwrite';
-import type { GameContextType, User, Story, StoryNode } from '@/types';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { databaseService } from "@/lib/database";
+import { account, getCurrentUser } from "@/lib/appwrite";
+import type { GameContextType, User, Story, StoryNode } from "@/types";
 
 export const GameContext = createContext<GameContextType | undefined>(undefined);
 
@@ -13,7 +12,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
 
-  // --- initialization logic stays the same ---
+  // --- initialize on mount ---
   useEffect(() => {
     initializeUserSession();
   }, []);
@@ -21,68 +20,47 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const initializeUserSession = async () => {
     try {
       setIsLoading(true);
-      
-      // Try to get current session
-      const session = await account.getSession('current');
-      if (session) {
-        // User is logged in, get their profile
-        const userAccount = await account.get();
-        const userProfile: User = {
-          id: userAccount.$id,
-          name: userAccount.name,
-          email: userAccount.email,
-          games_won: 0, // This should be fetched from database
-        };
-        setCurrentUser(userProfile);
-        setIsGuest(false);
-      } else {
-        // No session, create guest session
-        await createGuestSession();
+
+      const userAccount = await getCurrentUser();
+      if (!userAccount) {
+        throw new Error("No user returned from Appwrite");
       }
+
+      const userProfile: User = {
+        id: userAccount.$id,
+        name: userAccount.name || "Guest Player",
+        email: userAccount.email || "",
+        games_won: 0, // Could load from DB later
+      };
+
+      setCurrentUser(userProfile);
+      setIsGuest(userAccount.email === ""); // guests don’t have email
     } catch (error) {
-      console.error('Session initialization error:', error);
-      // If there's an error, create guest session as fallback
-      await createGuestSession();
+      console.error("Session initialization error:", error);
+      // As last fallback → generate a temporary guest in-memory
+      const tempUser: User = {
+        id: "temp-" + Date.now(),
+        name: "Temporary Player",
+        email: "",
+        games_won: 0,
+      };
+      setCurrentUser(tempUser);
+      setIsGuest(true);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const createGuestSession = async () => {
-    try {
-      // Create anonymous session
-      const session = await account.createAnonymousSession();
-      const guestUser: User = {
-        id: session.userId,
-        name: 'Guest Player',
-        email: '',
-        games_won: 0,
-      };
-      setCurrentUser(guestUser);
-      setIsGuest(true);
-    } catch (error) {
-      console.error('Guest session creation error:', error);
-      // Even if guest session fails, set a temporary user
-      const tempUser: User = {
-        id: 'temp-' + Date.now(),
-        name: 'Temporary Player',
-        email: '',
-        games_won: 0,
-      };
-      setCurrentUser(tempUser);
-      setIsGuest(true);
-    }
-  };
-
   const loginUser = async (userProfile: User) => {
     setCurrentUser(userProfile);
+    setIsGuest(false);
   };
 
   const logoutUser = async () => {
     try {
-      await account.deleteSession('current');
+      await account.deleteSession("current");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     }
     setCurrentUser(null);
     setCurrentStory(null);
@@ -125,7 +103,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 };
 
-// --- Unified custom hook ---
+// --- Custom Hook ---
 export const useGame = (): GameContextType => {
   const context = useContext(GameContext);
   if (!context) {

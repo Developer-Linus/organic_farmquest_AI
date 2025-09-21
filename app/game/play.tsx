@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { GameTopic, GameDifficulty, Story, StoryChoice } from '../../src/types';
+import { useGame } from '../../src/contexts/GameContext';
 
 // Mock story data - in real app, this would come from AI API
 const mockStory: Story = {
@@ -21,7 +22,7 @@ What's your first priority as you begin your organic farming journey?`,
       id: 'choice1',
       text: 'Focus on soil restoration and testing the previously treated area',
       points: 25,
-      consequence: 'You discover the soil needs time to recover, but you\'re building a strong foundation for future crops.'
+      consequence: 'You discover the soil needs time to recover, but you&apos;re building a strong foundation for future crops.'
     },
     {
       id: 'choice2', 
@@ -42,6 +43,7 @@ What's your first priority as you begin your organic farming journey?`,
 
 export default function GamePlay() {
   const insets = useSafeAreaInsets();
+  const { currentUser, isGuest, isLoading: authLoading } = useGame();
   const params = useLocalSearchParams<{ topic: GameTopic; difficulty: GameDifficulty }>();
   
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
@@ -50,9 +52,40 @@ export default function GamePlay() {
   const [score, setScore] = useState(0);
   const [storyCount, setStoryCount] = useState(1);
 
+  // Authentication guard
   useEffect(() => {
-    loadStory();
-  }, []);
+    if (authLoading) return; // Wait for auth state to be determined
+    
+    if (!currentUser || isGuest) {
+      Alert.alert(
+        'Authentication Required',
+        'Please login or create an account to play the game.',
+        [
+          {
+            text: 'Login',
+            onPress: () => router.replace('/auth/login'),
+            style: 'default'
+          },
+          {
+            text: 'Create Account',
+            onPress: () => router.replace('/auth/register'),
+            style: 'default'
+          },
+          {
+            text: 'Go Back',
+            onPress: () => router.replace('/(tabs)'),
+            style: 'cancel'
+          }
+        ]
+      );
+    }
+  }, [currentUser, isGuest, authLoading]);
+
+  useEffect(() => {
+    if (currentUser && !isGuest) {
+      loadStory();
+    }
+  }, [currentUser, isGuest]);
 
   const loadStory = async () => {
     setIsLoading(true);
@@ -62,7 +95,7 @@ export default function GamePlay() {
       
       // In real app, this would be an API call to generate story based on params
       setCurrentStory(mockStory);
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to load story. Please try again.');
     } finally {
       setIsLoading(false);
@@ -105,7 +138,7 @@ export default function GamePlay() {
     );
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-primary-50">
         <LinearGradient
@@ -127,6 +160,11 @@ export default function GamePlay() {
         </LinearGradient>
       </View>
     );
+  }
+
+  // Return early if not authenticated
+  if (!currentUser || isGuest) {
+    return null; // The useEffect will handle the redirect
   }
 
   return (

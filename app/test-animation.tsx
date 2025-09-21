@@ -3,8 +3,7 @@ import { Button, View } from 'react-native';
 import Animated, { 
   useSharedValue, 
   withSpring, 
-  useAnimatedStyle,
-  runOnJS 
+  useAnimatedStyle
 } from 'react-native-reanimated';
 
 export default function TestAnimation() {

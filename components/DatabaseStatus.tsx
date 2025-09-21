@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { Text, ActivityIndicator, Alert } from 'react-native';
 import { styled } from '@tamagui/core';
 import { Card, Button, XStack, YStack, Separator } from 'tamagui';
 import { CheckCircle, AlertCircle, XCircle, RefreshCw, Database } from '@tamagui/lucide-icons';

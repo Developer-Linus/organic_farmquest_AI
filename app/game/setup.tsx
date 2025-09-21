@@ -1,18 +1,59 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, Alert } from 'react-native';
 import { Button, H1, H2, YStack, XStack, Card, RadioGroup } from 'tamagui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GAME_TOPICS, GAME_DIFFICULTIES, TOPIC_INFO, DIFFICULTY_INFO } from '../../src/constants';
 import type { GameTopic, GameDifficulty } from '../../src/types';
+import { useGame } from '../../src/contexts/GameContext';
 
 export default function GameSetup() {
   const insets = useSafeAreaInsets();
+  const { currentUser, isGuest, isLoading } = useGame();
   const [selectedTopic, setSelectedTopic] = useState<GameTopic>('vegetables');
   const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>('easy');
 
+  // Authentication guard
+  useEffect(() => {
+    if (isLoading) return; // Wait for auth state to be determined
+    
+    if (!currentUser || isGuest) {
+      Alert.alert(
+        'Authentication Required',
+        'Please login or create an account to access the game setup.',
+        [
+          {
+            text: 'Login',
+            onPress: () => router.replace('/auth/login'),
+            style: 'default'
+          },
+          {
+            text: 'Create Account',
+            onPress: () => router.replace('/auth/register'),
+            style: 'default'
+          },
+          {
+            text: 'Go Back',
+            onPress: () => router.replace('/(tabs)'),
+            style: 'cancel'
+          }
+        ]
+      );
+    }
+  }, [currentUser, isGuest, isLoading]);
+
   const handleStartGame = () => {
+    // Double-check authentication before proceeding
+    if (!currentUser || isGuest) {
+      Alert.alert(
+        'Authentication Required',
+        'Please login to start the game.',
+        [{ text: 'OK', onPress: () => router.replace('/auth/login') }]
+      );
+      return;
+    }
+
     // Navigate to game screen with selected parameters
     router.push({
       pathname: '/game/play',
@@ -26,6 +67,19 @@ export default function GameSetup() {
   const handleBack = () => {
     router.back();
   };
+
+  // Show loading or return early if not authenticated
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (!currentUser || isGuest) {
+    return null; // The useEffect will handle the redirect
+  }
 
   return (
     <View 

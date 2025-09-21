@@ -341,7 +341,7 @@ export default function Login() {
                     textShadowRadius: 1,
                   }}
                 >
-                  Don't have an account?
+                  Don&apos;t have an account?
                 </Text>
                 <Button
                   size="$3"
