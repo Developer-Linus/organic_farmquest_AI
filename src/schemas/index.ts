@@ -3,13 +3,14 @@ import { z } from 'zod';
 
 // Validation schemas for API requests and responses
 export const UserSchema = z.object({
-  id: z.string().min(1),
+  // id is optional when inserting, but required when reading
+  id: z.string().min(1).optional().transform((val, ctx) => {
+    const raw: any = ctx?.parent;
+    return raw?.$id ?? val; // use $id from Appwrite if present
+  }),
   name: z.string().min(1).max(100),
   email: z.string().email(),
-  hashed_password: z.string().min(1),
   games_won: z.number().int().nonnegative().default(0),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
 });
 
 // Registration request schema (includes password validation)
@@ -38,19 +39,38 @@ export const StoryChoiceSchema = z.object({
   next_node_id: z.string().min(1),
 });
 
+export const StorySchema = z.object({
+  story_id: z.string().min(1),
+  user_id: z.string().min(1),
+  topic: z.string().min(1).max(100),
+  status: z.enum(['active', 'completed', 'failed']),
+  current_node_id: z.string().min(1).optional(),
+  is_won: z.boolean().default(false),
+});
+
 export const StoryNodeSchema = z.object({
   node_id: z.string().min(1),
   story_id: z.string().min(1),
   content: z.string().min(1).max(2000),
   is_root: z.boolean().default(false),
   is_ending: z.boolean().default(false),
-  is_winning_node: z.boolean().default(false),
-  choices: z.array(StoryChoiceSchema).max(2),
-  created_at: z.date(),
+  is_winning_ending: z.boolean().default(false),
+  choices: z.array(StoryChoiceSchema).max(4),
+});
+
+export const StoryJobSchema = z.object({
+  job_id: z.string().min(1),
+  story_id: z.string().min(1),
+  status: z.enum(['pending', 'processing', 'completed', 'failed']),
+  ai_prompt: z.string().min(1),
+  generated_content: z.string().optional(),
+  completed_at: z.date().optional(),
 });
 
 // Export inferred types for use in application
 export type UserData = z.infer<typeof UserSchema>;
 export type UserRegistrationData = z.infer<typeof UserRegistrationSchema>;
 export type UserLoginData = z.infer<typeof UserLoginSchema>;
+export type StoryData = z.infer<typeof StorySchema>;
 export type StoryNodeData = z.infer<typeof StoryNodeSchema>;
+export type StoryJobData = z.infer<typeof StoryJobSchema>;

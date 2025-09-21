@@ -7,12 +7,12 @@ import { Eye, EyeOff, ArrowLeft, Mail, Lock } from '@tamagui/lucide-icons';
 import { account } from '@/lib/appwrite';
 import { databaseService } from '@/lib/database';
 import { UserLoginSchema } from '@/src/schemas';
-import { useGameContext } from '@/src/contexts/GameContext';
+import { useGame } from '@/src/contexts/GameContext';
 import { BookTexture } from '@/components/BookTexture';
 
 export default function Login() {
   const insets = useSafeAreaInsets();
-  const { loginUser } = useGameContext();
+  const { loginUser } = useGame();
   const [formData, setFormData] = useState({
     email: '',
     password: '',

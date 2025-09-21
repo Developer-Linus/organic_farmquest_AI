@@ -6,7 +6,7 @@ config();
 
 // Database Configuration (copied from src/constants/index.ts)
 const DATABASE_CONFIG = {
-  DATABASE_ID: process.env.DATABASE_ID,
+  DATABASE_ID: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
   COLLECTIONS: {
     USERS: 'users',
     STORIES: 'stories',
@@ -31,9 +31,7 @@ const COLLECTION_SCHEMAS = {
             { key: 'email', type: 'string', size: 255, required: true },
             { key: 'name', type: 'string', size: 100, required: true },
             { key: 'hashed_password', type: 'string', size: 255, required: true },
-            { key: 'games_won', type: 'integer', required: false, default: 0 },
-            { key: 'createdAt', type: 'datetime', required: true },
-            { key: 'updatedAt', type: 'datetime', required: true }
+            { key: 'games_won', type: 'integer', required: false, default: 0 }
         ],
         indexes: [
             { key: 'email_index', type: 'unique', attributes: ['email'] }
@@ -47,8 +45,7 @@ const COLLECTION_SCHEMAS = {
             { key: 'topic', type: 'string', size: 100, required: true },
             { key: 'status', type: 'string', size: 20, required: true },
             { key: 'current_node_id', type: 'string', size: 50, required: false },
-            { key: 'is_won', type: 'boolean', required: false, default: false },
-            { key: 'created_at', type: 'datetime', required: true }
+            { key: 'is_won', type: 'boolean', required: false, default: false }
         ],
         indexes: [
             { key: 'user_stories', type: 'key', attributes: ['user_id'] },
@@ -60,11 +57,11 @@ const COLLECTION_SCHEMAS = {
         attributes: [
             { key: 'node_id', type: 'string', size: 50, required: true },
             { key: 'story_id', type: 'string', size: 50, required: true },
-            { key: 'content', type: 'string', size: 2000, required: true },
+            { key: 'content', type: 'string', size: 1500, required: true }, // Reduced from 2000
             { key: 'is_root', type: 'boolean', required: false, default: false },
             { key: 'is_ending', type: 'boolean', required: false, default: false },
             { key: 'is_winning_ending', type: 'boolean', required: false, default: false },
-            { key: 'choices', type: 'string', size: 10000, required: false } // JSON string
+            { key: 'choices', type: 'string', size: 5000, required: false } // Reduced from 10000
         ],
         indexes: [
             { key: 'story_nodes', type: 'key', attributes: ['story_id'] },
@@ -77,9 +74,8 @@ const COLLECTION_SCHEMAS = {
             { key: 'job_id', type: 'string', size: 50, required: true },
             { key: 'story_id', type: 'string', size: 50, required: true },
             { key: 'status', type: 'string', size: 20, required: true },
-            { key: 'ai_prompt', type: 'string', size: 2000, required: true },
-            { key: 'generated_content', type: 'string', size: 10000, required: false },
-            { key: 'created_at', type: 'datetime', required: true },
+            { key: 'ai_prompt', type: 'string', size: 1500, required: true }, // Reduced from 2000
+            { key: 'generated_content', type: 'string', size: 5000, required: false }, // Reduced from 10000
             { key: 'completed_at', type: 'datetime', required: false }
         ],
         indexes: [
@@ -150,6 +146,27 @@ async function createCollection(collectionId, schema) {
         }
     } catch (error) {
         console.error(`❌ Error creating collection ${schema.name}:`, error.message);
+        
+        // Enhanced error logging
+        console.log('  🔍 Full error object:', JSON.stringify({
+            name: error.name,
+            code: error.code,
+            type: error.type,
+            response: error.response
+        }, null, 2));
+        
+        console.log('  🔍 Error properties:', {
+            name: error.name,
+            message: error.message,
+            code: error.code,
+            type: error.type,
+            status: error.status,
+            response: error.response,
+            stack: error.stack
+        });
+        
+        console.log('  🔍 Error constructor:', error.constructor.name);
+        
         throw error;
     }
 }
@@ -205,14 +222,25 @@ async function createAttributes(collectionId, attributes) {
             
             console.log(`  ✅ Attribute "${attr.key}" created`);
             
-            // Small delay to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // Increased delay to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 500));
             
         } catch (error) {
             if (error.code === 409) {
                 console.log(`  ℹ️  Attribute "${attr.key}" already exists`);
             } else {
                 console.error(`  ❌ Error creating attribute ${attr.key}:`, error.message);
+                console.error(`  🔍 Full error object:`, JSON.stringify(error, null, 2));
+                console.error(`  🔍 Error properties:`, {
+                    name: error.name,
+                    message: error.message,
+                    code: error.code,
+                    type: error.type,
+                    status: error.status,
+                    response: error.response,
+                    stack: error.stack?.split('\n').slice(0, 3).join('\n') // First 3 lines of stack
+                });
+                console.error(`  🔍 Error constructor:`, error.constructor.name);
                 throw error;
             }
         }
@@ -234,14 +262,25 @@ async function createIndexes(collectionId, indexes) {
             
             console.log(`  ✅ Index "${index.key}" created`);
             
-            // Small delay to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // Increased delay to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 500));
             
         } catch (error) {
             if (error.code === 409) {
                 console.log(`  ℹ️  Index "${index.key}" already exists`);
             } else {
                 console.error(`  ❌ Error creating index ${index.key}:`, error.message);
+                console.error(`  🔍 Full error object:`, JSON.stringify(error, null, 2));
+                console.error(`  🔍 Error properties:`, {
+                    name: error.name,
+                    message: error.message,
+                    code: error.code,
+                    type: error.type,
+                    status: error.status,
+                    response: error.response,
+                    stack: error.stack?.split('\n').slice(0, 3).join('\n') // First 3 lines of stack
+                });
+                console.error(`  🔍 Error constructor:`, error.constructor.name);
                 throw error;
             }
         }
@@ -267,11 +306,17 @@ async function initializeDatabase() {
             // Create collection
             await createCollection(collectionId, schema);
             
+            // Add delay between collection creation and attribute creation
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
             // Create attributes
             if (schema.attributes && schema.attributes.length > 0) {
                 console.log(`  📋 Creating ${schema.attributes.length} attributes...`);
                 await createAttributes(collectionId, schema.attributes);
             }
+            
+            // Add delay between attributes and indexes
+            await new Promise(resolve => setTimeout(resolve, 1000));
             
             // Create indexes
             if (schema.indexes && schema.indexes.length > 0) {

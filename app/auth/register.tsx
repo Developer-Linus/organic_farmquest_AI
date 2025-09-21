@@ -1,214 +1,182 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, ImageBackground, Alert } from 'react-native';
-import { Button, H1, H2, YStack, XStack, Input, Label } from 'tamagui';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Eye, EyeOff, ArrowLeft, User, Mail, Lock } from '@tamagui/lucide-icons';
-import { account } from '@/lib/appwrite';
-import { databaseService } from '@/lib/database';
-import { UserRegistrationSchema } from '@/src/schemas';
-import { ID } from 'react-native-appwrite';
-import { useGameContext } from '@/src/contexts/GameContext';
+import React, { useState } from "react";
+import { View, Text, ScrollView, ImageBackground, Alert } from "react-native";
+import { Button, H1, H2, YStack, XStack, Input, Label } from "tamagui";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import { Eye, EyeOff, ArrowLeft, User, Mail, Lock } from "@tamagui/lucide-icons";
+import { account } from "@/lib/appwrite";
+import { databaseService } from "@/lib/database";
+import { UserRegistrationSchema } from "@/src/schemas";
+import { ID } from "react-native-appwrite";
+import { useGame } from "@/src/contexts/GameContext";
+
+type FormData = {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+};
+
+const initialForm: FormData = {
+  fullName: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+};
+
+// 🔹 Reusable form field component
+const FormField = ({
+  label,
+  icon: Icon,
+  secure,
+  value,
+  onChange,
+  toggleSecure,
+  showSecure,
+  placeholder,
+}: {
+  label: string;
+  icon: any;
+  secure?: boolean;
+  value: string;
+  onChange: (t: string) => void;
+  toggleSecure?: () => void;
+  showSecure?: boolean;
+  placeholder: string;
+}) => (
+  <YStack space="$2">
+    <Label fontWeight="500" color="$earth-700">
+      {label}
+    </Label>
+    <XStack
+      alignItems="center"
+      backgroundColor="rgba(255,255,255,0.9)"
+      borderRadius="$4"
+      borderWidth={1}
+      borderColor="$primary-300"
+      paddingHorizontal="$3"
+    >
+      <Icon size={20} color="#5D4E37" />
+      <Input
+        flex={1}
+        borderWidth={0}
+        backgroundColor="transparent"
+        placeholder={placeholder}
+        value={value}
+        onChangeText={onChange}
+        secureTextEntry={secure && !showSecure}
+        autoCapitalize="none"
+      />
+      {secure && toggleSecure && (
+        <Button
+          size="$2"
+          variant="ghost"
+          onPress={toggleSecure}
+          icon={showSecure ? EyeOff : Eye}
+          color="$earth-600"
+        />
+      )}
+    </XStack>
+  </YStack>
+);
 
 export default function Register() {
   const insets = useSafeAreaInsets();
-  const { loginUser } = useGameContext();
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
+  const { loginUser } = useGame();
+
+  const [formData, setFormData] = useState<FormData>(initialForm);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleChange = (field: keyof FormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const validateForm = () => {
     try {
       UserRegistrationSchema.parse(formData);
       return true;
-    } catch (error: any) {
-      const errorMessage = error.errors?.[0]?.message || 'Please check your input';
-      Alert.alert('Validation Error', errorMessage);
+    } catch (err: any) {
+      const message = err.errors?.[0]?.message || "Invalid input";
+      Alert.alert("Validation Error", message);
       return false;
     }
   };
 
   const handleRegister = async () => {
     if (!validateForm()) return;
-    
     setIsLoading(true);
-    let authUserId: string | null = null;
-    
-    try {
-      // Ensure no active session exists before registration
-      try {
-        await account.deleteSession('current');
-        console.log('Cleared existing session before registration');
-      } catch (sessionError) {
-        // No active session to clear, which is expected for new registrations
-        console.log('No existing session to clear');
-      }
 
-      // Create user account with Appwrite Auth
+    try {
+      // Clear any existing session
+      try {
+        await account.deleteSession("current");
+      } catch {}
+
+      // Create Auth account
       const userId = ID.unique();
-      authUserId = userId;
-      
-      const authResponse = await account.create(
-        userId,
-        formData.email,
-        formData.password,
-        formData.fullName
+      await account.create(userId, formData.email, formData.password, formData.fullName);
+      await account.createEmailPasswordSession(formData.email, formData.password);
+
+      // Create DB profile
+      const profile = await databaseService.createUser(
+        { name: formData.fullName, email: formData.email, games_won: 0 },
+        userId
       );
 
-      // IMPORTANT: Create session immediately after account creation
-      // This authenticates the user so they can perform database operations
-      await account.createEmailPasswordSession(formData.email, formData.password);
-      console.log('User authenticated successfully');
+      await loginUser(profile);
 
-      // Create user profile in database with the same ID as auth user
-      // Note: We use a placeholder for hashed_password since Appwrite handles auth separately
-      let userProfile;
-      try {
-        userProfile = await databaseService.createUser({
-          name: formData.fullName,
-          email: formData.email,
-          hashed_password: 'appwrite_managed', // Placeholder since Appwrite manages auth
-          games_won: 0
-        }, userId); // Pass the userId as a separate parameter
-        
-        console.log('User profile created successfully:', userProfile.id);
-      } catch (dbError: any) {
-        console.error('Database user creation error:', dbError);
-        
-        // Note: Appwrite Account API doesn't support client-side user deletion
-        // The user will remain in Appwrite auth but without a database profile
-        // This will be handled by the GameContext initialization logic
-        console.warn('Orphaned Appwrite user created with ID:', userId);
-        console.warn('User exists in Appwrite auth but not in database - will be handled on next login');
-        
-        // Provide clear guidance to the user
-        Alert.alert(
-          'Registration Issue', 
-          'There was an issue creating your profile. You can try logging in with your credentials, and we\'ll complete the setup automatically.',
-          [{ text: 'OK' }]
-        );
-        
-        // Re-throw the database error to be handled by the outer catch block
-        throw new Error(`Failed to create user profile in database: ${dbError.message || dbError}`);
-      }
-
-      // Only proceed with login if user profile was created successfully
-      if (userProfile) {
-        // Session already created above, just set user in context
-        await loginUser(userProfile);
-
-        Alert.alert('Success', 'Account created successfully!', [
-          { text: 'OK', onPress: () => router.push('/game/setup') }
-        ]);
-      } else {
-        throw new Error('User profile creation failed');
-      }
-      
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      
-      // Handle specific Appwrite errors
-      let errorMessage = 'Failed to create account. Please try again.';
-      
-      if (error.code === 409) {
-        errorMessage = 'An account with this email already exists. If you believe this is an error, please try logging in instead.';
-      } else if (error.code === 400) {
-        errorMessage = 'Invalid email or password format.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      Alert.alert('Registration Failed', errorMessage);
+      Alert.alert("Success", "Account created successfully!", [
+        { text: "OK", onPress: () => router.push("/game/setup") },
+      ]);
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      let msg = "Failed to create account. Please try again.";
+      if (err.code === 409) msg = "Email already registered. Please login instead.";
+      if (err.code === 400) msg = "Invalid email or password format.";
+      Alert.alert("Registration Failed", msg);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleBackToWelcome = () => {
-    router.back();
-  };
-
-  const handleGoToLogin = () => {
-    router.push('/auth/login');
-  };
-
   return (
-    <ImageBackground 
-      source={require('../../assets/images/book-texture.svg')}
+    <ImageBackground
+      source={require("../../assets/images/book-texture.svg")}
       style={{ flex: 1 }}
       resizeMode="cover"
     >
-      <View 
-        className="flex-1"
-        style={{ 
+      <View
+        style={{
+          flex: 1,
           paddingTop: insets.top,
           paddingBottom: insets.bottom,
           paddingLeft: insets.left,
           paddingRight: insets.right,
         }}
       >
-        <ScrollView 
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <YStack 
-            flex={1} 
-            paddingHorizontal="$6" 
-            paddingVertical="$4"
-            space="$4"
-            minHeight="100%"
-          >
-            {/* Header with Back Button */}
-            <XStack alignItems="center" justifyContent="space-between" marginTop="$2">
-              <Button
-                size="$3"
-                variant="ghost"
-                onPress={handleBackToWelcome}
-                icon={ArrowLeft}
-                color="$primary-700"
-                pressStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
-              />
-              <Text 
-                style={{
-                  fontSize: 16,
-                  color: '#5D4E37',
-                  fontWeight: '500',
-                  textShadowColor: 'rgba(255, 255, 255, 0.6)',
-                  textShadowOffset: { width: 0.5, height: 0.5 },
-                  textShadowRadius: 1,
-                }}
-              >
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+          <YStack flex={1} padding="$6" space="$4" minHeight="100%">
+            {/* Header */}
+            <XStack alignItems="center" justifyContent="space-between">
+              <Button size="$3" variant="ghost" onPress={() => router.back()} icon={ArrowLeft} />
+              <Text style={{ fontSize: 16, fontWeight: "500", color: "#5D4E37" }}>
                 Create Account
               </Text>
               <View style={{ width: 40 }} />
             </XStack>
 
-            {/* App Logo */}
+            {/* Logo */}
             <YStack alignItems="center" marginTop="$4">
-              <View 
+              <View
                 style={{
                   width: 80,
                   height: 80,
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
                   borderRadius: 40,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  shadowColor: '#8B7355',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 4,
-                  elevation: 4,
+                  backgroundColor: "white",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 <Text style={{ fontSize: 40 }}>🌱</Text>
@@ -217,295 +185,67 @@ export default function Register() {
 
             {/* Title */}
             <YStack alignItems="center" space="$2" marginTop="$4">
-              <H1 
-                textAlign="center" 
-                fontSize="$8" 
-                fontWeight="bold"
-                color="$primary-800"
-                style={{
-                  textShadowColor: 'rgba(255, 255, 255, 0.8)',
-                  textShadowOffset: { width: 1, height: 1 },
-                  textShadowRadius: 2,
-                }}
-              >
-                Join FarmQuest
-              </H1>
-              
-              <H2 
-                textAlign="center" 
-                fontSize="$4" 
-                color="$earth-700"
-                maxWidth={280}
-                style={{
-                  textShadowColor: 'rgba(255, 255, 255, 0.6)',
-                  textShadowOffset: { width: 0.5, height: 0.5 },
-                  textShadowRadius: 1,
-                }}
-              >
-                Start your organic farming journey
-              </H2>
+              <H1>Join FarmQuest</H1>
+              <H2 color="$earth-700">Start your organic farming journey</H2>
             </YStack>
 
-            {/* Registration Form */}
-            <YStack space="$4" marginTop="$6" flex={1}>
-              {/* Full Name Field */}
-              <YStack space="$2">
-                <Label 
-                  htmlFor="fullName"
-                  color="$earth-700"
-                  fontSize="$4"
-                  fontWeight="500"
-                  style={{
-                    textShadowColor: 'rgba(255, 255, 255, 0.5)',
-                    textShadowOffset: { width: 0.5, height: 0.5 },
-                    textShadowRadius: 1,
-                  }}
-                >
-                  Full Name
-                </Label>
-                <XStack 
-                  alignItems="center" 
-                  backgroundColor="rgba(255, 255, 255, 0.9)"
-                  borderRadius="$4"
-                  borderWidth={1}
-                  borderColor="$primary-300"
-                  paddingHorizontal="$3"
-                  style={{
-                    shadowColor: '#8B7355',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 2,
-                    elevation: 2,
-                  }}
-                >
-                  <User size={20} color="$earth-600" />
-                  <Input
-                    id="fullName"
-                    flex={1}
-                    borderWidth={0}
-                    backgroundColor="transparent"
-                    placeholder="Enter your full name"
-                    value={formData.fullName}
-                    onChangeText={(text) => handleInputChange('fullName', text)}
-                    fontSize="$4"
-                    color="$earth-800"
-                  />
-                </XStack>
-              </YStack>
-
-              {/* Email Field */}
-              <YStack space="$2">
-                <Label 
-                  htmlFor="register-email"
-                  color="$earth-700"
-                  fontSize="$4"
-                  fontWeight="500"
-                  style={{
-                    textShadowColor: 'rgba(255, 255, 255, 0.5)',
-                    textShadowOffset: { width: 0.5, height: 0.5 },
-                    textShadowRadius: 1,
-                  }}
-                >
-                  Email Address
-                </Label>
-                <XStack 
-                  alignItems="center" 
-                  backgroundColor="rgba(255, 255, 255, 0.9)"
-                  borderRadius="$4"
-                  borderWidth={1}
-                  borderColor="$primary-300"
-                  paddingHorizontal="$3"
-                  style={{
-                    shadowColor: '#8B7355',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 2,
-                    elevation: 2,
-                  }}
-                >
-                  <Mail size={20} color="$earth-600" />
-                  <Input
-                    id="register-email"
-                    flex={1}
-                    borderWidth={0}
-                    backgroundColor="transparent"
-                    placeholder="Enter your email"
-                    value={formData.email}
-                    onChangeText={(text) => handleInputChange('email', text)}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    fontSize="$4"
-                    color="$earth-800"
-                  />
-                </XStack>
-              </YStack>
-
-              {/* Password Field */}
-              <YStack space="$2">
-                <Label 
-                  htmlFor="register-password"
-                  color="$earth-700"
-                  fontSize="$4"
-                  fontWeight="500"
-                  style={{
-                    textShadowColor: 'rgba(255, 255, 255, 0.5)',
-                    textShadowOffset: { width: 0.5, height: 0.5 },
-                    textShadowRadius: 1,
-                  }}
-                >
-                  Password
-                </Label>
-                <XStack 
-                  alignItems="center" 
-                  backgroundColor="rgba(255, 255, 255, 0.9)"
-                  borderRadius="$4"
-                  borderWidth={1}
-                  borderColor="$primary-300"
-                  paddingHorizontal="$3"
-                  style={{
-                    shadowColor: '#8B7355',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 2,
-                    elevation: 2,
-                  }}
-                >
-                  <Lock size={20} color="$earth-600" />
-                  <Input
-                    id="register-password"
-                    flex={1}
-                    borderWidth={0}
-                    backgroundColor="transparent"
-                    placeholder="Create a password"
-                    value={formData.password}
-                    onChangeText={(text) => handleInputChange('password', text)}
-                    secureTextEntry={!showPassword}
-                    fontSize="$4"
-                    color="$earth-800"
-                  />
-                  <Button
-                    size="$2"
-                    variant="ghost"
-                    onPress={() => setShowPassword(!showPassword)}
-                    icon={showPassword ? EyeOff : Eye}
-                    color="$earth-600"
-                  />
-                </XStack>
-              </YStack>
-
-              {/* Confirm Password Field */}
-              <YStack space="$2">
-                <Label 
-                  htmlFor="confirmPassword"
-                  color="$earth-700"
-                  fontSize="$4"
-                  fontWeight="500"
-                  style={{
-                    textShadowColor: 'rgba(255, 255, 255, 0.5)',
-                    textShadowOffset: { width: 0.5, height: 0.5 },
-                    textShadowRadius: 1,
-                  }}
-                >
-                  Confirm Password
-                </Label>
-                <XStack 
-                  alignItems="center" 
-                  backgroundColor="rgba(255, 255, 255, 0.9)"
-                  borderRadius="$4"
-                  borderWidth={1}
-                  borderColor="$primary-300"
-                  paddingHorizontal="$3"
-                  style={{
-                    shadowColor: '#8B7355',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 2,
-                    elevation: 2,
-                  }}
-                >
-                  <Lock size={20} color="$earth-600" />
-                  <Input
-                    id="confirmPassword"
-                    flex={1}
-                    borderWidth={0}
-                    backgroundColor="transparent"
-                    placeholder="Confirm your password"
-                    value={formData.confirmPassword}
-                    onChangeText={(text) => handleInputChange('confirmPassword', text)}
-                    secureTextEntry={!showConfirmPassword}
-                    fontSize="$4"
-                    color="$earth-800"
-                  />
-                  <Button
-                    size="$2"
-                    variant="ghost"
-                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                    icon={showConfirmPassword ? EyeOff : Eye}
-                    color="$earth-600"
-                  />
-                </XStack>
-              </YStack>
-
-              {/* Password Requirements */}
-              <Text 
-                style={{
-                  fontSize: 12,
-                  color: '#8B7355',
-                  textAlign: 'center',
-                  marginTop: 8,
-                  textShadowColor: 'rgba(255, 255, 255, 0.6)',
-                  textShadowOffset: { width: 0.5, height: 0.5 },
-                  textShadowRadius: 1,
-                }}
-              >
+            {/* Form */}
+            <YStack space="$4" marginTop="$6">
+              <FormField
+                label="Full Name"
+                icon={User}
+                value={formData.fullName}
+                onChange={(t) => handleChange("fullName", t)}
+                placeholder="Enter your full name"
+              />
+              <FormField
+                label="Email Address"
+                icon={Mail}
+                value={formData.email}
+                onChange={(t) => handleChange("email", t)}
+                placeholder="Enter your email"
+              />
+              <FormField
+                label="Password"
+                icon={Lock}
+                secure
+                value={formData.password}
+                onChange={(t) => handleChange("password", t)}
+                toggleSecure={() => setShowPassword(!showPassword)}
+                showSecure={showPassword}
+                placeholder="Create a password"
+              />
+              <FormField
+                label="Confirm Password"
+                icon={Lock}
+                secure
+                value={formData.confirmPassword}
+                onChange={(t) => handleChange("confirmPassword", t)}
+                toggleSecure={() => setShowConfirm(!showConfirm)}
+                showSecure={showConfirm}
+                placeholder="Confirm your password"
+              />
+              <Text style={{ fontSize: 12, textAlign: "center", color: "#8B7355" }}>
                 Password must be at least 8 characters long
               </Text>
             </YStack>
 
-            {/* Action Buttons */}
-            <YStack space="$3" marginTop="$6" paddingBottom="$4">
+            {/* Buttons */}
+            <YStack space="$3" marginTop="$6">
               <Button
                 size="$5"
                 backgroundColor="$primary-600"
                 color="white"
                 borderRadius="$4"
-                fontWeight="600"
-                fontSize="$4"
                 onPress={handleRegister}
                 disabled={isLoading}
-                style={{
-                  shadowColor: '#8B7355',
-                  shadowOffset: { width: 0, height: 3 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 5,
-                  elevation: 6,
-                }}
-                pressStyle={{ backgroundColor: '$primary-700', scale: 0.98 }}
               >
-                {isLoading ? 'Creating Account...' : 'Create Account'}
+                {isLoading ? "Creating Account..." : "Create Account"}
               </Button>
 
-              {/* Login Link */}
               <XStack justifyContent="center" alignItems="center" space="$2">
-                <Text 
-                  style={{
-                    fontSize: 14,
-                    color: '#8B7355',
-                    textShadowColor: 'rgba(255, 255, 255, 0.6)',
-                    textShadowOffset: { width: 0.5, height: 0.5 },
-                    textShadowRadius: 1,
-                  }}
-                >
-                  Already have an account?
-                </Text>
-                <Button
-                  size="$3"
-                  variant="ghost"
-                  onPress={handleGoToLogin}
-                  color="$primary-700"
-                  fontWeight="600"
-                  pressStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
-                >
+                <Text style={{ fontSize: 14, color: "#8B7355" }}>Already have an account?</Text>
+                <Button size="$3" variant="ghost" onPress={() => router.push("/auth/login")}>
                   Login
                 </Button>
               </XStack>

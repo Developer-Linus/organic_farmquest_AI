@@ -37,10 +37,7 @@ const COLLECTION_SCHEMAS: Record<string, CollectionSchema> = {
     attributes: [
       { key: 'email', type: 'string', size: 255, required: true },
       { key: 'name', type: 'string', size: 100, required: true },
-      { key: 'avatar', type: 'string', size: 500, required: false },
-      { key: 'level', type: 'integer', required: false, default: 1 },
-      { key: 'experience', type: 'integer', required: false, default: 0 },
-      { key: 'coins', type: 'integer', required: false, default: 0 }
+      { key: 'games_won', type: 'integer', required: false, default: 0 }
     ],
     indexes: [
       { key: 'email_index', type: 'unique', attributes: ['email'] }
@@ -49,54 +46,47 @@ const COLLECTION_SCHEMAS: Record<string, CollectionSchema> = {
   [DATABASE_CONFIG.COLLECTIONS.STORIES]: {
     name: 'Stories',
     attributes: [
-      { key: 'title', type: 'string', size: 200, required: true },
-      { key: 'description', type: 'string', size: 1000, required: false },
+      { key: 'story_id', type: 'string', size: 50, required: true },
+      { key: 'user_id', type: 'string', size: 50, required: true },
       { key: 'topic', type: 'string', size: 100, required: true },
-      { key: 'difficulty', type: 'string', size: 20, required: true },
-      { key: 'userId', type: 'string', size: 50, required: true },
       { key: 'status', type: 'string', size: 20, required: true },
-      { key: 'currentNodeId', type: 'string', size: 50, required: false },
-      { key: 'score', type: 'integer', required: false, default: 0 },
-      { key: 'completedAt', type: 'datetime', required: false }
+      { key: 'current_node_id', type: 'string', size: 50, required: false },
+      { key: 'is_won', type: 'boolean', required: false, default: false }
     ],
     indexes: [
-      { key: 'user_stories', type: 'key', attributes: ['userId'] },
+      { key: 'user_stories', type: 'key', attributes: ['user_id'] },
       { key: 'status_index', type: 'key', attributes: ['status'] }
     ]
   },
   [DATABASE_CONFIG.COLLECTIONS.STORY_NODES]: {
     name: 'Story Nodes',
     attributes: [
-      { key: 'storyId', type: 'string', size: 50, required: true },
-      { key: 'content', type: 'string', size: 5000, required: true },
-      { key: 'nodeType', type: 'string', size: 20, required: true },
-      { key: 'choices', type: 'string', size: 10000, required: false },
-      { key: 'parentNodeId', type: 'string', size: 50, required: false },
-      { key: 'isRoot', type: 'boolean', required: false, default: false },
-      { key: 'order', type: 'integer', required: false, default: 0 }
+      { key: 'node_id', type: 'string', size: 50, required: true },
+      { key: 'story_id', type: 'string', size: 50, required: true },
+      { key: 'content', type: 'string', size: 2000, required: true },
+      { key: 'is_root', type: 'boolean', required: false, default: false },
+      { key: 'is_ending', type: 'boolean', required: false, default: false },
+      { key: 'is_winning_ending', type: 'boolean', required: false, default: false },
+      { key: 'choices', type: 'string', size: 10000, required: false }
     ],
     indexes: [
-      { key: 'story_nodes', type: 'key', attributes: ['storyId'] },
-      { key: 'parent_nodes', type: 'key', attributes: ['parentNodeId'] }
+      { key: 'story_nodes', type: 'key', attributes: ['story_id'] },
+      { key: 'node_id_index', type: 'unique', attributes: ['node_id'] }
     ]
   },
   [DATABASE_CONFIG.COLLECTIONS.STORY_JOBS]: {
     name: 'Story Jobs',
     attributes: [
-      { key: 'storyId', type: 'string', size: 50, required: true },
-      { key: 'userId', type: 'string', size: 50, required: true },
-      { key: 'jobType', type: 'string', size: 50, required: true },
+      { key: 'job_id', type: 'string', size: 50, required: true },
+      { key: 'story_id', type: 'string', size: 50, required: true },
       { key: 'status', type: 'string', size: 20, required: true },
-      { key: 'prompt', type: 'string', size: 2000, required: false },
-      { key: 'result', type: 'string', size: 10000, required: false },
-      { key: 'error', type: 'string', size: 1000, required: false },
-      { key: 'retryCount', type: 'integer', required: false, default: 0 },
-      { key: 'startedAt', type: 'datetime', required: false },
-      { key: 'completedAt', type: 'datetime', required: false }
+      { key: 'ai_prompt', type: 'string', size: 2000, required: true },
+      { key: 'generated_content', type: 'string', size: 10000, required: false },
+      { key: 'completed_at', type: 'datetime', required: false }
     ],
     indexes: [
-      { key: 'story_jobs', type: 'key', attributes: ['storyId'] },
-      { key: 'user_jobs', type: 'key', attributes: ['userId'] },
+      { key: 'story_jobs', type: 'key', attributes: ['story_id'] },
+      { key: 'job_id_index', type: 'unique', attributes: ['job_id'] },
       { key: 'status_jobs', type: 'key', attributes: ['status'] }
     ]
   }
@@ -357,7 +347,7 @@ export async function quickDatabaseCheck(client: Client, databaseId: string): Pr
   details?: any;
 }> {
   try {
-    DatabaseValidator.validateCollectionId(databaseId);
+    DatabaseValidator.validateDatabaseId(databaseId);
     
     const initializer = new DatabaseInitializer(client, databaseId);
     const status = await RetryHandler.withRetry(

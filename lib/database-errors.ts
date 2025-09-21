@@ -2,6 +2,17 @@
  * Custom error classes for database operations
  */
 
+export class NetworkError extends DatabaseError {
+  constructor(originalError: any) {
+    super(
+      `Network error occurred: ${originalError.message}`,
+      'NETWORK_ERROR',
+      originalError
+    );
+    this.name = 'NetworkError';
+  }
+}
+
 export class DatabaseError extends Error {
   public readonly code: string;
   public readonly details?: any;
@@ -76,14 +87,14 @@ export class PermissionError extends DatabaseError {
   }
 }
 
-export class NetworkError extends DatabaseError {
-  constructor(originalError: any) {
+export class DuplicateUserError extends DatabaseError {
+  constructor(email: string) {
     super(
-      `Network error during database operation: ${originalError.message}`,
-      'NETWORK_ERROR',
-      { originalError }
+      `A user with email '${email}' already exists. Please use a different email or try logging in.`,
+      'DUPLICATE_USER',
+      { email }
     );
-    this.name = 'NetworkError';
+    this.name = 'DuplicateUserError';
   }
 }
 
@@ -111,7 +122,13 @@ export class DatabaseErrorHandler {
         return new PermissionError(context?.operation || 'database operation');
 
       case 409:
-        if (message.includes('already exists')) {
+        if (message.includes('already exists') || message.includes('duplicate')) {
+          // Check if it's a user email duplicate
+          if (message.includes('email') || context?.operation === 'createUser') {
+            const emailMatch = message.match(/email[:\s]+([^\s]+)/i);
+            const email = emailMatch ? emailMatch[1] : 'unknown';
+            return new DuplicateUserError(email);
+          }
           return new DatabaseError(
             `Resource already exists: ${message}`,
             'RESOURCE_EXISTS',
@@ -309,6 +326,23 @@ export class DatabaseValidator {
     
     if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(collectionId)) {
       throw new ValidationError('Collection ID contains invalid characters');
+    }
+  }
+
+  /**
+   * Validate database ID format
+   */
+  static validateDatabaseId(databaseId: string): void {
+    if (!databaseId || typeof databaseId !== 'string') {
+      throw new ValidationError('Database ID must be a non-empty string');
+    }
+    
+    if (databaseId.length < 1 || databaseId.length > 36) {
+      throw new ValidationError('Database ID must be between 1 and 36 characters');
+    }
+    
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(databaseId)) {
+      throw new ValidationError('Database ID contains invalid characters');
     }
   }
 
