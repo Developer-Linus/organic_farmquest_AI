@@ -1,4 +1,3 @@
-import { NotepadText } from '@tamagui/lucide-icons';
 import { z } from 'zod';
 
 // Validation schemas for API requests and responses
