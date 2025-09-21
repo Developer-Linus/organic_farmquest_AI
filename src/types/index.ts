@@ -3,11 +3,13 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  hashed_password: string;
   games_won: number;
-  createdAt: string;
-  updatedAt: string;
 }
+
+// Game-related types
+export type GameTopic = 'vegetables' | 'fruits' | 'herbs' | 'grains' | 'livestock';
+export type GameDifficulty = 'easy' | 'medium' | 'hard';
+
 export interface Story {
   story_id: string;
   user_id: string;
@@ -15,7 +17,6 @@ export interface Story {
   status: 'active' | 'completed' | 'failed';
   current_node_id?: string;
   is_won: boolean;
-  created_at: Date;
 }
 export interface StoryChoice {
   id: string;
@@ -38,15 +39,21 @@ export interface StoryJob{
   status: 'pending' | 'processing' | 'completed' | 'failed';
   ai_prompt: string;
   generated_content?: string;
-  created_at: Date;
   completed_at?: Date;
 }
 export interface GameContextType {
   currentUser: User | null;
   currentStory: Story | null;
   currentNode: StoryNode | null;
+  isLoading: boolean;
+  isGuest: boolean;
 
   // Actions
   createNewStory: (topic: string) => Promise<void>;
   makeChoice: (choiceId: string) => Promise<void>;
+  
+  // User session management
+  loginUser: (userProfile: User) => Promise<void>;
+  logoutUser: () => Promise<void>;
+  initializeUserSession: () => Promise<void>;
 }
