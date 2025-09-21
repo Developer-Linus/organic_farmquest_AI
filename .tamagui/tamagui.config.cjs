@@ -1801,7 +1801,18 @@ var customTokens = {
     "accent-600": "#e6c200",
     "accent-700": "#b8a000",
     "accent-800": "#8a7800",
-    "accent-900": "#5c5000"
+    "accent-900": "#5c5000",
+    // Orange Colors - Warning & Development
+    "orange-50": "#fff7ed",
+    "orange-100": "#ffedd5",
+    "orange-200": "#fed7aa",
+    "orange-300": "#fdba74",
+    "orange-400": "#fb923c",
+    "orange-500": "#f97316",
+    "orange-600": "#ea580c",
+    "orange-700": "#c2410c",
+    "orange-800": "#9a3412",
+    "orange-900": "#7c2d12"
   }
 };
 var tamaguiConfig = createTamagui({

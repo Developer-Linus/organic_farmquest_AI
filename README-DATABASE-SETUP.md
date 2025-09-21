@@ -20,6 +20,12 @@ This project includes an automatic database initialization script that creates a
    - `attributes.write`
    - `indexes.read`
    - `indexes.write`
+   - `users.read`
+   - `users.write`
+   - `sessions.read`
+   - `sessions.write`
+   - `accounts.read`
+   - `accounts.write`
 
 ### 2. Update Environment Variables
 

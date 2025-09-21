@@ -8,7 +8,7 @@
     "userInterfaceStyle": "light",
     "scheme": "organic-farmquest-ai",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/icon.svg",
       "resizeMode": "contain",
       "backgroundColor": "#E8F5E8"
     },
@@ -21,14 +21,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icon.svg",
         "backgroundColor": "#E8F5E8"
       },
       "package": "com.organicfarmquest.ai"
     },
     "web": {
-      "favicon": "./assets/favicon.png",
-      "bundler": "metro"
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router"

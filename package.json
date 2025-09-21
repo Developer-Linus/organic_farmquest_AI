@@ -13,6 +13,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.14",
     "@expo/vector-icons": "^15.0.2",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
@@ -23,6 +24,8 @@
     "@tamagui/core": "^1.132.25",
     "@tamagui/lucide-icons": "^1.132.25",
     "@tamagui/metro-plugin": "^1.132.25",
+    "ai": "^5.0.47",
+    "axios": "^1.12.2",
     "dotenv": "^17.2.2",
     "expo": "~54.0.8",
     "expo-constants": "~18.0.9",
