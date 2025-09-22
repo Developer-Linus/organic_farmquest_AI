@@ -1,26 +1,38 @@
-import { useEffect } from 'react';
-import { router } from 'expo-router';
-import { useGame } from '../src/contexts/GameContext';
+import { View, Text } from 'react-native';
 
 export default function Index() {
-  const { currentUser, isLoading } = useGame();
-
-  useEffect(() => {
-    if (isLoading) return; // Wait for auth state to be determined
-    
-    // Add a small delay to ensure Root Layout is mounted before navigation
-    const timer = setTimeout(() => {
-      if (currentUser && !currentUser.isGuest) {
-        // User is authenticated, go to tabs
-        router.replace('/(tabs)');
-      } else {
-        // User is not authenticated, show welcome screen
-        router.replace('/welcome');
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [currentUser, isLoading]);
-
-  return null;
+  console.log('🔄 Index.tsx - Simple test component loaded');
+  
+  return (
+    <View style={{ 
+      flex: 1, 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      backgroundColor: '#E8F5E8' 
+    }}>
+      <Text style={{ 
+        fontSize: 24, 
+        fontWeight: 'bold', 
+        color: '#22c55e',
+        marginBottom: 20
+      }}>
+        🌱 Organic FarmQuest AI
+      </Text>
+      <Text style={{ 
+        fontSize: 16, 
+        color: '#5D4E37',
+        textAlign: 'center',
+        paddingHorizontal: 40
+      }}>
+        Custom App is Loading Successfully!
+      </Text>
+      <Text style={{ 
+        fontSize: 14, 
+        color: '#666',
+        marginTop: 20
+      }}>
+        This is NOT the default Expo welcome page
+      </Text>
+    </View>
+  );
 }

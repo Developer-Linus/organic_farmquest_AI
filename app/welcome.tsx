@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, ImageBackground } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { Button, H1, H2, YStack } from 'tamagui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -18,10 +18,11 @@ export default function Welcome() {
 
 
   return (
-    <ImageBackground 
-      source={require('../assets/images/book-texture.svg')}
-      style={{ flex: 1 }}
-      resizeMode="cover"
+    <View 
+      style={{ 
+        flex: 1,
+        backgroundColor: '#f5f2e8' // Fallback background color
+      }}
     >
       <View 
         className="flex-1"
@@ -200,8 +201,8 @@ export default function Welcome() {
             </Text>
           </YStack>
         </YStack>
-       </ScrollView>
-     </View>
-   </ImageBackground>
+      </ScrollView>
+      </View>
+    </View>
   );
 }

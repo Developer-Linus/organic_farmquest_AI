@@ -1,14 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, ImageBackground, Alert } from "react-native";
-import { Button, H1, H2, YStack, XStack, Input, Label } from "tamagui";
+import { View, Text, ScrollView, Alert } from "react-native";
+import { Button, Input, H1, YStack, XStack } from "tamagui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Eye, EyeOff, ArrowLeft, User, Mail, Lock } from "@tamagui/lucide-icons";
-import { account } from "@/lib/appwrite";
-import { databaseService } from "@/lib/database";
-import { UserRegistrationSchema } from "@/src/schemas";
-import { ID } from "react-native-appwrite";
+import { Eye, EyeOff, User, Mail, Lock } from "@tamagui/lucide-icons";
 import { useGame } from "@/src/contexts/GameContext";
+import { createAccount } from "@/lib/appwrite";
 
 type FormData = {
   fullName: string;
@@ -142,10 +139,11 @@ export default function Register() {
   };
 
   return (
-    <ImageBackground
-      source={require("../../assets/images/book-texture.svg")}
-      style={{ flex: 1 }}
-      resizeMode="cover"
+    <View
+      style={{ 
+        flex: 1,
+        backgroundColor: '#f5f2e8' // Fallback background color
+      }}
     >
       <View
         style={{
@@ -253,6 +251,6 @@ export default function Register() {
           </YStack>
         </ScrollView>
       </View>
-    </ImageBackground>
+    </View>
   );
 }

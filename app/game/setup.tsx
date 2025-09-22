@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
-import { Button, H1, H2, YStack, XStack, Card, RadioGroup } from 'tamagui';
+import { Button, H1, H2, YStack, XStack, Card, RadioGroup, Input } from 'tamagui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,6 +13,7 @@ export default function GameSetup() {
   const { currentUser, isGuest, isLoading } = useGame();
   const [selectedTopic, setSelectedTopic] = useState<GameTopic>('vegetables');
   const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>('easy');
+  const [customTopic, setCustomTopic] = useState<string>('');
 
   // Authentication guard
   useEffect(() => {
@@ -54,12 +55,23 @@ export default function GameSetup() {
       return;
     }
 
+    // Validate custom topic if selected
+    if (selectedTopic === 'custom' && !customTopic.trim()) {
+      Alert.alert(
+        'Custom Topic Required',
+        'Please enter a custom organic farming topic to continue.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     // Navigate to game screen with selected parameters
     router.push({
       pathname: '/game/play',
       params: {
         topic: selectedTopic,
         difficulty: selectedDifficulty,
+        customTopic: selectedTopic === 'custom' ? customTopic.trim() : undefined,
       },
     });
   };
@@ -175,6 +187,32 @@ export default function GameSetup() {
                   ))}
                 </YStack>
               </RadioGroup>
+              
+              {/* Custom Topic Input */}
+              {selectedTopic === 'custom' && (
+                <YStack space="$2" marginTop="$3">
+                  <Text className="text-base font-medium text-primary-700">
+                    Enter your custom organic farming topic:
+                  </Text>
+                  <Input
+                    placeholder="e.g., Mushroom cultivation, Aquaponics, Permaculture design..."
+                    value={customTopic}
+                    onChangeText={setCustomTopic}
+                    backgroundColor="$background"
+                    borderColor="$primary-300"
+                    focusStyle={{
+                      borderColor: '$primary-500',
+                      backgroundColor: '$primary-50'
+                    }}
+                    padding="$3"
+                    borderRadius="$3"
+                    fontSize="$4"
+                  />
+                  <Text className="text-sm text-earth-600 opacity-80">
+                    Be specific! The more detailed your topic, the better your learning experience.
+                  </Text>
+                </YStack>
+              )}
             </YStack>
 
             {/* Difficulty Selection */}

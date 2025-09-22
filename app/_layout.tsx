@@ -1,5 +1,5 @@
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Slot } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef } from 'react';
 import 'react-native-reanimated';
@@ -155,29 +155,7 @@ export default function RootLayout() {
     <TamaguiProvider config={config}>
       <SafeAreaProvider>
         <GameProvider>
-          <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="welcome" options={{ headerShown: false }} />
-            <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-            <Stack.Screen name="auth/register" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen 
-              name="game/setup" 
-              options={{ 
-                headerShown: false,
-                presentation: 'card'
-              }} 
-            />
-            <Stack.Screen 
-              name="game/play" 
-              options={{ 
-                headerShown: false,
-                presentation: 'card',
-                gestureEnabled: false // Prevent accidental swipe back during game
-              }} 
-            />
-            <Stack.Screen name="test-animation" options={{ title: 'Test Animation' }} />
-          </Stack>
+          <Slot />
         </GameProvider>
       </SafeAreaProvider>
     </TamaguiProvider>

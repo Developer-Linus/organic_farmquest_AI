@@ -4,7 +4,7 @@ import { z } from 'zod';
  * Custom validation error class
  */
 export class ValidationError extends Error {
-  constructor(message: string, public details?: any) {
+  constructor(message: string, public details?: z.ZodIssue[]) {
     super(message);
     this.name = 'ValidationError';
   }
@@ -16,10 +16,10 @@ export class ValidationError extends Error {
 export const validateRequest = <T>(schema: z.ZodSchema<T>, data: unknown): T => {
   const result = schema.safeParse(data);
   if (!result.success) {
-    const errorMessage = result.error.errors
-      .map(err => `${err.path.join('.')}: ${err.message}`)
+    const errorMessage = result.error.issues
+      .map((err: z.ZodIssue) => `${err.path.join('.')}: ${err.message}`)
       .join(', ');
-    throw new ValidationError(`Validation failed: ${errorMessage}`, result.error.errors);
+    throw new ValidationError(`Validation failed: ${errorMessage}`, result.error.issues);
   }
   return result.data;
 };
@@ -34,8 +34,8 @@ export const safeValidate = <T>(schema: z.ZodSchema<T>, data: unknown): {
 } => {
   const result = schema.safeParse(data);
   if (!result.success) {
-    const errorMessage = result.error.errors
-      .map(err => `${err.path.join('.')}: ${err.message}`)
+    const errorMessage = result.error.issues
+      .map((err: z.ZodIssue) => `${err.path.join('.')}: ${err.message}`)
       .join(', ');
     return {
       success: false,
@@ -63,7 +63,7 @@ export const validateForm = <T>(schema: z.ZodSchema<T>, data: unknown): {
     const fieldErrors: Record<string, string> = {};
     let generalError: string | undefined;
     
-    result.error.errors.forEach(err => {
+    result.error.issues.forEach((err: z.ZodIssue) => {
       if (err.path.length > 0) {
         const fieldName = err.path.join('.');
         fieldErrors[fieldName] = err.message;
