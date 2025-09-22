@@ -1,7 +1,3 @@
-/**
- * Custom error classes for database operations
- */
-
 export class DatabaseError extends Error {
   public readonly code: string;
   public readonly details?: any;
@@ -179,9 +175,6 @@ export class DatabaseErrorHandler {
     }
   }
 
-  /**
-   * Get user-friendly error message
-   */
   static getUserFriendlyMessage(error: DatabaseError): string {
     switch (error.code) {
       case 'COLLECTION_NOT_FOUND':
@@ -212,9 +205,6 @@ export class DatabaseErrorHandler {
     }
   }
 
-  /**
-   * Check if error is recoverable (user can retry)
-   */
   static isRecoverable(error: DatabaseError): boolean {
     const recoverableCodes = [
       'NETWORK_ERROR',
@@ -224,9 +214,6 @@ export class DatabaseErrorHandler {
     return recoverableCodes.includes(error.code);
   }
 
-  /**
-   * Check if error requires immediate attention (critical)
-   */
   static isCritical(error: DatabaseError): boolean {
     const criticalCodes = [
       'COLLECTION_NOT_FOUND',
@@ -238,9 +225,6 @@ export class DatabaseErrorHandler {
     return criticalCodes.includes(error.code);
   }
 
-  /**
-   * Log error with appropriate level
-   */
   static logError(error: DatabaseError, context?: string): void {
     const logData = {
       name: error.name,
@@ -262,9 +246,6 @@ export class DatabaseErrorHandler {
   }
 }
 
-/**
- * Retry utility for database operations
- */
 export class RetryHandler {
   static async withRetry<T>(
     operation: () => Promise<T>,

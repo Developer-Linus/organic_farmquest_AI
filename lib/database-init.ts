@@ -127,9 +127,6 @@ export class DatabaseInitializer {
     }
   }
 
-  /**
-   * Get collection information
-   */
   async getCollectionInfo(collectionId: string) {
     try {
       DatabaseValidator.validateCollectionId(collectionId);
@@ -192,9 +189,6 @@ export class DatabaseInitializer {
     };
   }
 
-  /**
-   * Get a user-friendly status report
-   */
   async getStatusReport(): Promise<{
     status: 'complete' | 'partial' | 'missing' | 'error';
     message: string;
@@ -331,9 +325,6 @@ export class DatabaseInitializer {
   }
 }
 
-/**
- * Create a database initializer instance
- */
 export function createDatabaseInitializer(client: Client, databaseId: string): DatabaseInitializer {
   return new DatabaseInitializer(client, databaseId);
 }

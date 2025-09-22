@@ -9,14 +9,7 @@ import type { User, Story, StoryNode } from "./api-types";
 
 import { ID, Query } from "react-native-appwrite";
 
-/**
- * DatabaseService
- * Wrapper for all Appwrite database operations
- */
 export class DatabaseService {
-  /**
-   * Create a new user
-   */
   async createUser(userData: Omit<User, "id">, userId?: string): Promise<User> {
     const id = userId || ID.unique();
 
@@ -26,7 +19,7 @@ export class DatabaseService {
     });
 
     try {
-      // ✅ Prevent duplicate by email instead of ID
+      // Prevent duplicate by email instead of ID
       const existingUsers = await databases.listDocuments(
         db.databaseId,
         db.collections.USERS,
@@ -54,9 +47,6 @@ export class DatabaseService {
     }
   }
 
-  /**
-   * Fetch user by ID
-   */
   async getUserById(userId: string): Promise<User | null> {
     try {
       const response = await databases.getDocument(
@@ -71,9 +61,6 @@ export class DatabaseService {
     }
   }
 
-  /**
-   * Create a new story
-   */
   async createStory(storyData: Omit<Story, "story_id">): Promise<Story> {
     const story_id = ID.unique();
 
@@ -95,9 +82,6 @@ export class DatabaseService {
     }
   }
 
-  /**
-   * Get active stories for a user
-   */
   async getActiveStoriesByUser(userId: string): Promise<Story[]> {
     try {
       const response = await databases.listDocuments(
@@ -112,9 +96,6 @@ export class DatabaseService {
     }
   }
 
-  /**
-   * Get the starting node of a story
-   */
   async getStoryStartNode(storyId: string): Promise<StoryNode> {
     try {
       const response = await databases.listDocuments(
@@ -133,9 +114,6 @@ export class DatabaseService {
     }
   }
 
-  /**
-   * Get the next node given current node & choice
-   */
   async getNextNode(currentNodeId: string, choiceId: string): Promise<StoryNode> {
     try {
       const currentNodeDoc = await databases.getDocument(
@@ -169,9 +147,6 @@ export class DatabaseService {
     }
   }
 
-  /**
-   * Create a new story node
-   */
   async createStoryNode(nodeData: Omit<StoryNode, "node_id">): Promise<StoryNode> {
     const validatedData = StoryNodeSchema.parse({
       ...nodeData,
@@ -191,9 +166,6 @@ export class DatabaseService {
     }
   }
 
-  /**
-   * Get story node by ID
-   */
   async getStoryNodeById(nodeId: string): Promise<StoryNode | null> {
     try {
       const response = await databases.getDocument(
@@ -208,9 +180,6 @@ export class DatabaseService {
     }
   }
 
-  /**
-   * Get all nodes for a story
-   */
   async getStoryNodes(storyId: string): Promise<StoryNode[]> {
     try {
       const response = await databases.listDocuments(

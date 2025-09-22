@@ -241,17 +241,10 @@ export class ApiClient {
     );
   }
 
-  /**
-   * Updates the base configuration
-   * Useful for changing base URL or default headers
-   */
   updateConfig(newConfig: Partial<ApiClientConfig>): void {
     this.config = { ...this.config, ...newConfig };
   }
 
-  /**
-   * Gets current configuration (read-only)
-   */
   getConfig(): Readonly<Required<ApiClientConfig>> {
     return { ...this.config };
   }
@@ -277,10 +270,6 @@ export const createApiClient = (config?: Partial<ApiClientConfig>): ApiClient =>
 // Export a default instance for convenience
 export const apiClient = createApiClient();
 
-/**
- * Updates the API client with authentication headers
- * Should be called after user login to include auth token in requests
- */
 export const setAuthToken = (token: string) => {
   apiClient.updateConfig({
     headers: {
@@ -290,10 +279,6 @@ export const setAuthToken = (token: string) => {
   });
 };
 
-/**
- * Removes authentication headers from API client
- * Should be called after user logout
- */
 export const clearAuthToken = () => {
   const config = apiClient.getConfig();
   const { Authorization, ...headersWithoutAuth } = config.headers;

@@ -1,13 +1,5 @@
-/**
- * Error Handling Utilities
- * Provides comprehensive error management for the React Native application
- */
-
 import { ApiClientError, NetworkError, ValidationError, ServerError } from './api-types';
 
-/**
- * Error severity levels for logging and user feedback
- */
 export enum ErrorSeverity {
   LOW = 'low',
   MEDIUM = 'medium',
@@ -15,9 +7,6 @@ export enum ErrorSeverity {
   CRITICAL = 'critical',
 }
 
-/**
- * Error categories for better error classification
- */
 export enum ErrorCategory {
   NETWORK = 'network',
   VALIDATION = 'validation',
@@ -28,9 +17,6 @@ export enum ErrorCategory {
   UNKNOWN = 'unknown',
 }
 
-/**
- * Enhanced error information for logging and debugging
- */
 export interface ErrorInfo {
   category: ErrorCategory;
   severity: ErrorSeverity;
@@ -41,17 +27,7 @@ export interface ErrorInfo {
   context?: Record<string, any>;
 }
 
-/**
- * Error classification utility
- * Analyzes errors and provides structured information for handling
- */
 export class ErrorClassifier {
-  /**
-   * Classifies an error and returns structured error information
-   * @param error - The error to classify
-   * @param context - Additional context for error analysis
-   * @returns Structured error information
-   */
   static classify(error: unknown, context?: Record<string, any>): ErrorInfo {
     // Handle custom API errors
     if (error instanceof ValidationError) {
@@ -164,11 +140,6 @@ export class ErrorClassifier {
     };
   }
 
-  /**
-   * Gets user-friendly message for server error status codes
-   * @param statusCode - HTTP status code
-   * @returns User-friendly error message
-   */
   private static getServerErrorMessage(statusCode: number): string {
     switch (statusCode) {
       case 400:
@@ -398,11 +369,6 @@ export const ErrorUtils = {
     }
   },
 
-  /**
-   * Creates a user-friendly error message from any error
-   * @param error - Error to convert
-   * @returns User-friendly error message
-   */
   getUserMessage(error: unknown): string {
     const errorInfo = ErrorClassifier.classify(error);
     return errorInfo.userMessage;
@@ -418,11 +384,6 @@ export const ErrorUtils = {
     return errorInfo.shouldRetry;
   },
 
-  /**
-   * Gets recommended retry delay for an error
-   * @param error - Error to analyze
-   * @returns Retry delay in seconds, or null if not retryable
-   */
   getRetryDelay(error: unknown): number | null {
     const errorInfo = ErrorClassifier.classify(error);
     return errorInfo.shouldRetry ? (errorInfo.retryAfter || 5) : null;

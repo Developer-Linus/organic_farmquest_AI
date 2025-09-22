@@ -34,18 +34,6 @@ const apiClient = new ApiClient({
 export class StoryApiService {
   constructor(private client = apiClient) {}
 
-  /**
-   * Creates a new interactive story
-   * 
-   * @param topic - The farming topic for story generation
-   * @param userId - The user ID for story ownership
-   * @returns Promise<Story> - The generated story object
-   * 
-   * Why separate validation:
-   * - Provides immediate feedback for invalid inputs
-   * - Reduces unnecessary network requests
-   * - Maintains consistent validation across the app
-   */
   async createStory(topic: string, userId: string): Promise<Story> {
     // Input validation
     this.validateCreateStoryInput(topic, userId);
@@ -138,19 +126,6 @@ export class StoryApiService {
     }
   }
 
-  /**
-   * Updates story progress and completion status
-   * 
-   * @param storyId - The story ID to update
-   * @param currentNodeId - The current node the user is on
-   * @param isWon - Optional flag indicating if the user won the story
-   * @returns Promise<{ success: true }> - Success confirmation
-   * 
-   * Why track progress:
-   * - Enables save/resume functionality
-   * - Provides analytics on user engagement
-   * - Supports achievement and scoring systems
-   */
   async updateProgress(
     storyId: string,
     currentNodeId: string,
