@@ -1,12 +1,24 @@
 // Database Configuration
 export const DATABASE_CONFIG = {
-  DATABASE_ID: 'farmquest',
+  DATABASE_ID: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
   COLLECTIONS: {
     USERS: 'users',
     STORIES: 'stories',
     STORY_NODES: 'story_nodes',
     STORY_JOBS: 'story_jobs',
   }
+} as const;
+
+// Game Configuration
+export const GAME_CONFIG = {
+  MAX_STORIES: 5,
+  SCORE_THRESHOLDS: {
+    EXCELLENT: 400,
+    GOOD: 300,
+    FAIR: 200,
+    POOR: 0,
+  },
+  MAX_SCORE_PER_STORY: 100,
 } as const;
 
 // Story status enums
@@ -26,10 +38,9 @@ export const JOB_STATUS = {
 // Game Topics
 export const GAME_TOPICS = {
   VEGETABLES: 'vegetables',
-  FRUITS: 'fruits',
   HERBS: 'herbs',
-  GRAINS: 'grains',
-  LIVESTOCK: 'livestock',
+  FRUITS: 'fruits',
+  CUSTOM: 'custom',
 } as const;
 
 // Game Difficulties
@@ -41,31 +52,26 @@ export const GAME_DIFFICULTIES = {
 
 // Topic Information
 export const TOPIC_INFO = {
-  vegetables: {
-    name: 'Vegetables',
+  [GAME_TOPICS.VEGETABLES]: {
+    name: 'Organic Vegetables',
     icon: '🥕',
-    description: 'Learn about growing healthy vegetables organically'
+    description: 'Learn sustainable vegetable farming techniques'
   },
-  fruits: {
-    name: 'Fruits',
-    icon: '🍎',
-    description: 'Discover organic fruit cultivation techniques'
-  },
-  herbs: {
-    name: 'Herbs',
+  [GAME_TOPICS.HERBS]: {
+    name: 'Medicinal Herbs',
     icon: '🌿',
-    description: 'Master the art of growing aromatic herbs'
+    description: 'Discover organic herb cultivation and natural remedies'
   },
-  grains: {
-    name: 'Grains',
-    icon: '🌾',
-    description: 'Explore sustainable grain farming methods'
+  [GAME_TOPICS.FRUITS]: {
+    name: 'Organic Fruits',
+    icon: '🍎',
+    description: 'Master organic fruit growing and orchard management'
   },
-  livestock: {
-    name: 'Livestock',
-    icon: '🐄',
-    description: 'Learn ethical and organic animal husbandry'
-  }
+  [GAME_TOPICS.CUSTOM]: {
+    name: 'Custom Topic',
+    icon: '✨',
+    description: 'Explore your own organic farming interest'
+  },
 } as const;
 
 // Difficulty Information

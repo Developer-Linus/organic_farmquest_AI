@@ -32,13 +32,20 @@ export const UserLoginSchema = z.object({
 });
 
 export const StoryChoiceSchema = z.object({
-  id: z.string().min(1),
+  choice_id: z.string().min(1),
   text: z.string().min(1).max(500),
-  is_correct: z.boolean(),
-  next_node_id: z.string().min(1),
+  next_node: z.string().min(1),
 });
 
 export const StorySchema = z.object({
+  story_id: z.string().min(1),
+  title: z.string().min(1).max(200),
+  nodes: z.array(StoryNodeSchema).optional().default([]),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+});
+
+export const GameSessionSchema = z.object({
   story_id: z.string().min(1),
   user_id: z.string().min(1),
   topic: z.string().min(1).max(100),
@@ -71,5 +78,6 @@ export type UserData = z.infer<typeof UserSchema>;
 export type UserRegistrationData = z.infer<typeof UserRegistrationSchema>;
 export type UserLoginData = z.infer<typeof UserLoginSchema>;
 export type StoryData = z.infer<typeof StorySchema>;
+export type GameSessionData = z.infer<typeof GameSessionSchema>;
 export type StoryNodeData = z.infer<typeof StoryNodeSchema>;
 export type StoryJobData = z.infer<typeof StoryJobSchema>;

@@ -12,19 +12,19 @@ export type GameDifficulty = 'easy' | 'medium' | 'hard';
 
 export interface Story {
   story_id: string;
-  user_id: string;
-  topic: string;
-  status: 'active' | 'completed' | 'failed';
-  current_node_id?: string;
-  is_won: boolean;
+  title: string;
+  nodes: StoryNode[];
+  created_at?: string;
+  updated_at?: string;
 }
+
 export interface StoryChoice {
   id: string;
   text: string;
-  is_correct: boolean;
-  next_node_id: string;
+  points?: number;
 }
-export interface StoryNode{
+
+export interface StoryNode {
   node_id: string;
   story_id: string;
   content: string;
@@ -32,6 +32,17 @@ export interface StoryNode{
   is_ending: boolean;
   is_winning_ending: boolean;
   choices: StoryChoice[];
+}
+
+// Game session types for tracking progress
+export interface GameSession {
+  story_id: string;
+  user_id: string;
+  topic: string;
+  status: 'active' | 'completed' | 'failed';
+  current_node_id?: string;
+  is_won: boolean;
+  score?: number;
 }
 export interface StoryJob{
   job_id: string;
@@ -43,6 +54,7 @@ export interface StoryJob{
 }
 export interface GameContextType {
   currentUser: User | null;
+  currentSession: GameSession | null;
   currentStory: Story | null;
   currentNode: StoryNode | null;
   isLoading: boolean;
