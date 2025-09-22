@@ -2,17 +2,6 @@
  * Custom error classes for database operations
  */
 
-export class NetworkError extends DatabaseError {
-  constructor(originalError: any) {
-    super(
-      `Network error occurred: ${originalError.message}`,
-      'NETWORK_ERROR',
-      originalError
-    );
-    this.name = 'NetworkError';
-  }
-}
-
 export class DatabaseError extends Error {
   public readonly code: string;
   public readonly details?: any;
@@ -22,6 +11,17 @@ export class DatabaseError extends Error {
     this.name = 'DatabaseError';
     this.code = code;
     this.details = details;
+  }
+}
+
+export class NetworkError extends DatabaseError {
+  constructor(originalError: any) {
+    super(
+      `Network error occurred: ${originalError.message}`,
+      'NETWORK_ERROR',
+      originalError
+    );
+    this.name = 'NetworkError';
   }
 }
 

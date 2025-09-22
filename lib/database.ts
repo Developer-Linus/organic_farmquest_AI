@@ -2,9 +2,10 @@ import { databases, db } from "./appwrite";
 import { 
   UserSchema, 
   StorySchema, 
+  GameSessionSchema,
   StoryNodeSchema 
 } from "../src/schemas";
-import type { User, Story, StoryNode } from "../types/";
+import type { User, Story, StoryNode } from "./api-types";
 
 import { ID, Query } from "react-native-appwrite";
 
@@ -74,16 +75,18 @@ export class DatabaseService {
    * Create a new story
    */
   async createStory(storyData: Omit<Story, "story_id">): Promise<Story> {
+    const story_id = ID.unique();
+
     const validatedData = StorySchema.parse({
       ...storyData,
-      story_id: ID.unique(),
+      story_id,
     });
 
     try {
       const response = await databases.createDocument(
         db.databaseId,
         db.collections.STORIES,
-        validatedData.story_id,
+        story_id,
         validatedData
       );
       return StorySchema.parse(response);
